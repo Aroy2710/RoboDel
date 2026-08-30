@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 import Papa from 'papaparse';
 
+const API_URL = "http://localhost:8000";
 const PHASES = {
   OBSERVATION: 0,
   TRANSITION: 1,
@@ -10,7 +11,7 @@ const PHASES = {
   COMPLETED: 4
 };
 
-const MAX_SEND_WIDTH = 3000;
+const MAX_SEND_WIDTH = 1000;
 
 function App() {
   const sceneList = ["robothor_scene_01", "robothor_scene_02", "robothor_scene_03"];
@@ -161,10 +162,21 @@ function App() {
       const scaledX = Math.round(x * (targetWidth / fullWidth));
       const scaledY = Math.round(y * (targetHeight / fullHeight));
 
-      const response = await axios.post('https://multitude-resupply-apply.ngrok-free.dev/process_click', {
+      const targetBox = boundingboxes[clickedBoxIndex];
+      const scaleW = targetWidth / fullWidth;
+      const scaleH = targetHeight / fullHeight;
+      const scaledBox = [
+        Math.round(targetBox.x * scaleW),
+        Math.round(targetBox.y * scaleH),
+        Math.round((targetBox.x + targetBox.width) * scaleW),
+        Math.round((targetBox.y + targetBox.height) * scaleH)
+      ];
+
+      const response = await axios.post(`${API_URL}/process_click`, {
         image_b64: cleanB64,
         x: scaledX,
-        y: scaledY
+        y: scaledY,
+        box: scaledBox
       }, {
         headers: { 'ngrok-skip-browser-warning': 'true' },
         timeout: 60000
@@ -203,7 +215,6 @@ function App() {
         index === clickedBoxIndex ? { ...box, isClicked: true } : box
       ));
 
-      const targetBox = boundingboxes[clickedBoxIndex];
       setRemovedObjects(prev => [...prev, {
         object_id: targetBox.id,
         bounding_box: { x: targetBox.x, y: targetBox.y, width: targetBox.width, height: targetBox.height },
@@ -259,11 +270,6 @@ function App() {
       {phase === PHASES.INTERACTIVE && (
         <div style={{ display: 'flex', gap: '40px', justifyContent: 'center' }}>
           <div>
-            <h3>Scene {sceneIndex + 1}: Target Reference</h3>
-            <img src={modifiedImage} alt="Modified Reference" style={{ maxWidth: '500px', border: '2px solid #555' }} />
-          </div>
-
-          <div>
             <h3>Interactive Manipulation</h3>
             <div style={{ marginBottom: '15px' }}>
               <button onClick={handleUndo} disabled={imageHistory.length === 0 || isProcessing} style={{ padding: '8px 16px', marginRight: '10px' }}>
@@ -277,7 +283,7 @@ function App() {
             <div style={{ position: 'relative', display: 'inline-block', lineHeight: 0 }}>
               <img
                 id="interactive-scene-img"
-                src={displayImage}
+                src={modifiedImage} // Kept static or interactive depending on your preference
                 onClick={handleImageClick}
                 alt="Interactive Scene"
                 style={{ width: '500px', height: 'auto', border: '2px solid blue', cursor: isProcessing ? 'wait' : 'crosshair', display: 'block' }}
@@ -307,10 +313,13 @@ function App() {
               })}
             </div>
           </div>
-        </div>
-      )}
 
-      {phase === PHASES.CONFIRMATION && (
+          <div>
+            <h3>Scene {sceneIndex + 1}: Target Reference (Modified)</h3>
+            <img src={displayImage} alt="Modified Reference" style={{ maxWidth: '500px', border: '2px solid #555', display: 'block' }} />
+          </div>
+        </div>
+      )}      {phase === PHASES.CONFIRMATION && (
         <div style={{ textAlign: 'center' }}>
           <h2>Confirm Final Image (Scene {sceneIndex + 1})</h2>
           <img src={displayImage} alt="Final Scene" style={{ maxWidth: '600px', border: '3px solid green', marginBottom: '20px' }} />
