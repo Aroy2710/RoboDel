@@ -1,16 +1,20 @@
 import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 import Papa from 'papaparse';
+import './App.css';
 
 const API_URL = "http://localhost:8000";
 const PHASES = {
+  FIXATION: -1,
+  INSTRUCTIONS: -2,
   OBSERVATION: 0,
   TRANSITION: 1,
   INTERACTIVE: 2,
-  CONFIRMATION: 3,
-  COMPLETED: 4
+  COMPLETED: 3
 };
 
+const FIXATION_DURATION_SECONDS = 5;
+const OBSERVATION_DURATION_SECONDS = 10;
 const MAX_SEND_WIDTH = 1000;
 
 function App() {
@@ -21,8 +25,10 @@ function App() {
   const originalImage = `/Original_Images/${baseSceneName}.jpg`;
   const modifiedImage = `/Modified_Images/${baseSceneName}_modified.jpg`;
 
-  const [phase, setPhase] = useState(PHASES.OBSERVATION);
-  const [timeLeft, setTimeLeft] = useState(10);
+  // Always begin with the 5s fixation cross on initial load & scene changes
+  const [phase, setPhase] = useState(PHASES.FIXATION);
+  const [fixationTimeLeft, setFixationTimeLeft] = useState(FIXATION_DURATION_SECONDS);
+  const [timeLeft, setTimeLeft] = useState(OBSERVATION_DURATION_SECONDS);
   const [isProcessing, setIsProcessing] = useState(false);
 
   const [displayImage, setDisplayImage] = useState(modifiedImage);
@@ -33,13 +39,14 @@ function App() {
   const [boundingboxes, setBoundingBoxes] = useState([]);
   const [naturalDims, setNaturalDims] = useState(null);
 
-  // Reset and load images when sceneIndex changes
+  // Handle scene resets & transitions
   useEffect(() => {
     setDisplayImage(modifiedImage);
     setRemovedObjects([]);
     setImageHistory([]);
-    setTimeLeft(10);
-    setPhase(PHASES.OBSERVATION);
+    setTimeLeft(OBSERVATION_DURATION_SECONDS);
+    setFixationTimeLeft(FIXATION_DURATION_SECONDS);
+    setPhase(PHASES.FIXATION);
 
     const ref = new Image();
     ref.crossOrigin = "anonymous";
@@ -50,7 +57,7 @@ function App() {
     ref.src = modifiedImage;
   }, [sceneIndex, modifiedImage]);
 
-  // Load bounding boxes from CSV on mount or scene change
+  // Load bounding boxes from CSV
   useEffect(() => {
     fetch('/Bouding_Boxes/bounding_box.csv')
       .then(response => response.text())
@@ -61,7 +68,7 @@ function App() {
           skipEmptyLines: true,
           complete: (results) => {
             const sceneBoxes = results.data
-              .filter(row => row.image_name === `${baseSceneName}_modified.jpg` || row.image_name.includes(baseSceneName))
+              .filter(row => row.image_name === `${baseSceneName}_modified.jpg` || row.image_name?.includes(baseSceneName))
               .map((row, index) => ({
                 id: index + 1,
                 x: row.bbox_x,
@@ -70,14 +77,29 @@ function App() {
                 height: row.bbox_height,
                 isClicked: false
               }));
-            console.log(`Loaded Bounding Boxes for ${baseSceneName}:`, sceneBoxes);
             setBoundingBoxes(sceneBoxes);
           }
         });
       });
   }, [baseSceneName]);
 
-  // Observation Timer
+  // Fixation Timer (5 seconds) -> Directs to Instructions if Scene 1, else directly to Observation
+  useEffect(() => {
+    if (phase === PHASES.FIXATION) {
+      if (fixationTimeLeft > 0) {
+        const timerId = setTimeout(() => setFixationTimeLeft(fixationTimeLeft - 1), 1000);
+        return () => clearTimeout(timerId);
+      } else {
+        if (sceneIndex === 0) {
+          setPhase(PHASES.INSTRUCTIONS);
+        } else {
+          setPhase(PHASES.OBSERVATION);
+        }
+      }
+    }
+  }, [fixationTimeLeft, phase, sceneIndex]);
+
+  // Observation Timer (10 seconds)
   useEffect(() => {
     if (phase === PHASES.OBSERVATION) {
       if (timeLeft > 0) {
@@ -90,7 +112,7 @@ function App() {
     }
   }, [timeLeft, phase]);
 
-  // Perfect Stack (LIFO) Undo with explicit boxIndex pairing
+  // Stack Undo tracking
   const handleUndo = () => {
     if (imageHistory.length > 0) {
       const previous = imageHistory[imageHistory.length - 1];
@@ -129,8 +151,7 @@ function App() {
     if (clickedBoxIndex === -1) return;
 
     setIsProcessing(true);
-    
-    // Save state stack including the exact boxIndex for perfect LIFO undo tracking
+
     setImageHistory(prev => [
       ...prev,
       { 
@@ -229,7 +250,8 @@ function App() {
     }
   };
 
-  const handleFinish = async () => {
+  // Direct auto-save and transition to next scene
+  const handleReviewAndSave = async () => {
     setIsProcessing(true);
     try {
       const fullCanvas = document.createElement('canvas');
@@ -238,7 +260,7 @@ function App() {
       fullCanvas.getContext('2d').drawImage(workingImageRef.current, 0, 0);
       const finalB64 = fullCanvas.toDataURL('image/png').split(',')[1];
 
-      await axios.post('http://localhost:8000/save_session', {
+      await axios.post(`${API_URL}/save_session`, {
         image_b64: finalB64,
         removed_objects: removedObjects,
         base_scene_name: baseSceneName
@@ -250,93 +272,161 @@ function App() {
         setPhase(PHASES.COMPLETED);
       }
     } catch (error) {
-      console.error("Error saving session:", error);
+      console.error("Error auto-saving session:", error);
     } finally {
       setIsProcessing(false);
     }
   };
 
   return (
-    <div style={{ fontFamily: 'sans-serif', padding: '20px' }}>
-      {phase === PHASES.OBSERVATION && (
-        <div style={{ textAlign: 'center' }}>
-          <h2>Scene {sceneIndex + 1} of {sceneList.length}: Observe the Scene ({timeLeft}s remaining)</h2>
-          <img src={originalImage} alt="Observation" style={{ maxWidth: '800px', border: '2px solid #ccc' }} />
+    <div className="app-container">
+      {/* 1. Red Fixation Cross Screen (5s on all scenes) */}
+      {phase === PHASES.FIXATION && (
+        <div className="fixation-screen">
+          <div className="fixation-cross" />
         </div>
       )}
 
-      {phase === PHASES.TRANSITION && <div style={{ textAlign: 'center' }}><h2>Transitioning to Scene {sceneIndex + 1}...</h2></div>}
+      {/* 2. Instructions Screen (Appears immediately after fixation ONLY for Scene 1) */}
+      {phase === PHASES.INSTRUCTIONS && (
+        <div className="instructions-screen">
+          <div className="instructions-card">
+            <h2>Experiment Instructions</h2>
+            <ul>
+              <li>
+                <span className="step-num">1</span>
+                <div><strong>Observe:</strong> You will view a scene for 10 seconds. Look at any part of the image</div>
+              </li>
+              <li>
+                <span className="step-num">2</span>
+                <div><strong>Modify:</strong> The scene will be shown to you again , it might or might not be modified. click on the objects that you think were not in the original scene</div>
+              </li>
+              <li>
+                <span className="step-num">3</span>
+                <div>On the right of the interactive scene, a new image will be shown with the object removed </div>
+              </li>
+              <li>
+                <span className="step-num">4</span>
+                <div><strong>Save:</strong> Once you are decided what the original scene looked like - click "Save & Next" to immediately save your results and advance.</div>
+              </li>
+            </ul>
+            <button 
+              className="start-btn" 
+              onClick={() => setPhase(PHASES.OBSERVATION)}
+            >
+              Start Observation
+            </button>
+          </div>
+        </div>
+      )}
 
+      {/* 3. Fullscreen Observation Phase (10s duration) */}
+      {phase === PHASES.OBSERVATION && (
+        <div className="observable-screen">
+          <div className="observable-timer-badge">
+            Scene {sceneIndex + 1}/{sceneList.length} | {timeLeft}s remaining
+          </div>
+          <img 
+            src={originalImage} 
+            alt="Observation View" 
+            className="observable-image" 
+          />
+        </div>
+      )}
+
+      {/* 4. Transition Screen */}
+      {phase === PHASES.TRANSITION && (
+        <div className="centered-view">
+          <h2>Transitioning to Interactive Mode...</h2>
+        </div>
+      )}
+
+      {/* 5. Enlarged Interactive Workspace */}
       {phase === PHASES.INTERACTIVE && (
-        <div style={{ display: 'flex', gap: '40px', justifyContent: 'center' }}>
-          <div>
-            <h3>Interactive Manipulation</h3>
-            <div style={{ marginBottom: '15px' }}>
-              <button onClick={handleUndo} disabled={imageHistory.length === 0 || isProcessing} style={{ padding: '8px 16px', marginRight: '10px' }}>
+        <div className="interactive-layout">
+          <div className="interactive-toolbar">
+            <h2>Scene {sceneIndex + 1}: Interactive Modification</h2>
+            <div style={{ display: 'flex', gap: '12px' }}>
+              <button 
+                onClick={handleUndo} 
+                disabled={imageHistory.length === 0 || isProcessing}
+                className="btn-secondary"
+              >
                 Undo Last Action
               </button>
-              <button onClick={() => setPhase(PHASES.CONFIRMATION)} disabled={isProcessing} style={{ padding: '8px 16px', backgroundColor: '#e0e0e0' }}>
-                Review and Save
+              <button 
+                onClick={handleReviewAndSave} 
+                disabled={isProcessing}
+                className="btn-primary"
+              >
+                {isProcessing ? 'Saving to Server...' : (sceneIndex + 1 < sceneList.length ? 'Save & Next' : 'Save & Finish')}
               </button>
             </div>
+          </div>
 
-            <div style={{ position: 'relative', display: 'inline-block', lineHeight: 0 }}>
-              <img
-                id="interactive-scene-img"
-                src={modifiedImage} // Kept static or interactive depending on your preference
-                onClick={handleImageClick}
-                alt="Interactive Scene"
-                style={{ width: '500px', height: 'auto', border: '2px solid blue', cursor: isProcessing ? 'wait' : 'crosshair', display: 'block' }}
-              />
-
-              {naturalDims && boundingboxes.map((box) => {
-                const leftPercent = (box.x / naturalDims.width) * 100;
-                const topPercent = (box.y / naturalDims.height) * 100;
-                const widthPercent = (box.width / naturalDims.width) * 100;
-                const heightPercent = (box.height / naturalDims.height) * 100;
-
-                return (
-                  <div
-                    key={box.id}
-                    style={{
-                      position: 'absolute',
-                      left: `${leftPercent}%`,
-                      top: `${topPercent}%`,
-                      width: `${widthPercent}%`,
-                      height: `${heightPercent}%`,
-                      border: `2px solid ${box.isClicked ? 'red' : 'green'}`,
-                      backgroundColor: box.isClicked ? 'rgba(255, 0, 0, 0.2)' : 'rgba(0, 255, 0, 0.1)',
-                      pointerEvents: 'none'
-                    }}
+          <div className="interactive-windows-grid">
+            {/* Left Interactive Target Panel */}
+            <div className="interactive-card">
+              <div className="interactive-card-title">Interactive Scene</div>
+              <div className="interactive-viewport-wrapper">
+                <div style={{ position: 'relative', display: 'inline-block', lineHeight: 0, maxHeight: '100%', maxWidth: '100%' }}>
+                  <img
+                    id="interactive-scene-img"
+                    src={modifiedImage}
+                    onClick={handleImageClick}
+                    alt="Interactive Target"
+                    className="interactive-viewport-img"
+                    style={{ cursor: isProcessing ? 'wait' : 'crosshair' }}
                   />
-                );
-              })}
+
+                  {naturalDims && boundingboxes.map((box) => {
+                    const leftPercent = (box.x / naturalDims.width) * 100;
+                    const topPercent = (box.y / naturalDims.height) * 100;
+                    const widthPercent = (box.width / naturalDims.width) * 100;
+                    const heightPercent = (box.height / naturalDims.height) * 100;
+
+                    return (
+                      <div
+                        key={box.id}
+                        style={{
+                          position: 'absolute',
+                          left: `${leftPercent}%`,
+                          top: `${topPercent}%`,
+                          width: `${widthPercent}%`,
+                          height: `${heightPercent}%`,
+                          border: `2px solid ${box.isClicked ? '#ef4444' : '#22c55e'}`,
+                          backgroundColor: box.isClicked ? 'rgba(239, 68, 68, 0.25)' : 'rgba(34, 197, 94, 0.15)',
+                          pointerEvents: 'none'
+                        }}
+                      />
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+
+            {/* Right Inpainted Result View */}
+            <div className="interactive-card">
+              <div className="interactive-card-title">Current Scene State</div>
+              <div className="interactive-viewport-wrapper">
+                <img 
+                  src={displayImage} 
+                  alt="Inpainted State" 
+                  className="interactive-viewport-img"
+                />
+              </div>
             </div>
           </div>
-
-          <div>
-            <h3>Scene {sceneIndex + 1}: Target Reference (Modified)</h3>
-            <img src={displayImage} alt="Modified Reference" style={{ maxWidth: '500px', border: '2px solid #555', display: 'block' }} />
-          </div>
-        </div>
-      )}      {phase === PHASES.CONFIRMATION && (
-        <div style={{ textAlign: 'center' }}>
-          <h2>Confirm Final Image (Scene {sceneIndex + 1})</h2>
-          <img src={displayImage} alt="Final Scene" style={{ maxWidth: '600px', border: '3px solid green', marginBottom: '20px' }} />
-          <br />
-          <button onClick={handleFinish} disabled={isProcessing} style={{ padding: '10px 20px', backgroundColor: '#4CAF50', color: 'white', marginRight: '15px' }}>
-            {isProcessing ? 'Saving...' : (sceneIndex + 1 < sceneList.length ? 'Save & Next Scene' : 'Save & Finish Program')}
-          </button>
-          <button onClick={() => setPhase(PHASES.INTERACTIVE)} disabled={isProcessing} style={{ padding: '10px 20px' }}>
-            Back to Editing
-          </button>
         </div>
       )}
 
+      {/* 6. Completed Phase */}
       {phase === PHASES.COMPLETED && (
-        <div style={{ textAlign: 'center', marginTop: '50px' }}>
-          <h2>All Sessions Complete!</h2>
-          <p>You have successfully completed all {sceneList.length} scenes.</p>
+        <div className="centered-view">
+          <h2>All Sessions Complete</h2>
+          <p style={{ marginTop: '12px', color: '#9ca3af' }}>
+            All scenes have been modified and saved to the server.
+          </p>
         </div>
       )}
     </div>

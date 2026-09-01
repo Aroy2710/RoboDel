@@ -1,0 +1,93 @@
+{
+    "dataset_version": "1.0",
+    "sessions": [
+        {
+            "scene_id": "robothor_scene_01",
+            "timestamp": "2026-09-01T06:58:01.999364Z",
+            "rendered_image_name": "robothor_scene_01_rendered_4c4c3ed8.png",
+            "original_image_path": "Original_Images/robothor_scene_01.jpg",
+            "modified_image_path": "Modified_Images/robothor_scene_01_modified.png",
+            "user_interactions": {
+                "removed_objects": []
+            }
+        },
+        {
+            "scene_id": "robothor_scene_02",
+            "timestamp": "2026-09-01T06:58:19.967554Z",
+            "rendered_image_name": "robothor_scene_02_rendered_c49177d4.png",
+            "original_image_path": "Original_Images/robothor_scene_02.jpg",
+            "modified_image_path": "Modified_Images/robothor_scene_02_modified.png",
+            "user_interactions": {
+                "removed_objects": [
+                    {
+                        "object_id": 1,
+                        "click_position": {
+                            "x": 689,
+                            "y": 826
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            "scene_id": "robothor_scene_03",
+            "timestamp": "2026-09-01T06:59:05.199456Z",
+            "rendered_image_name": "robothor_scene_03_rendered_3cda9208.png",
+            "original_image_path": "Original_Images/robothor_scene_03.jpg",
+            "modified_image_path": "Modified_Images/robothor_scene_03_modified.png",
+            "user_interactions": {
+                "removed_objects": []
+            }
+        },
+        {
+            "scene_id": "robothor_scene_01",
+            "timestamp": "2026-09-01T06:59:50.537910Z",
+            "rendered_image_name": "robothor_scene_01_rendered_7390f7c3.png",
+            "original_image_path": "Original_Images/robothor_scene_01.jpg",
+            "modified_image_path": "Modified_Images/robothor_scene_01_modified.png",
+            "user_interactions": {
+                "removed_objects": []
+            }
+        },
+        {
+            "scene_id": "robothor_scene_01",
+            "timestamp": "2026-09-01T07:00:59.183924Z",
+            "rendered_image_name": "robothor_scene_01_rendered_a5ecaa9a.png",
+            "original_image_path": "Original_Images/robothor_scene_01.jpg",
+            "modified_image_path": "Modified_Images/robothor_scene_01_modified.png",
+            "user_interactions": {
+                "removed_objects": []
+            }
+        },
+        {
+            "scene_id": "robothor_scene_01",
+            "timestamp": "2026-09-01T07:07:22.818335Z",
+            "rendered_image_name": "robothor_scene_01_rendered_ddb84f45.png",
+            "original_image_path": "Original_Images/robothor_scene_01.jpg",
+            "modified_image_path": "Modified_Images/robothor_scene_01_modified.png",
+            "user_interactions": {
+                "removed_objects": []
+            }
+        },
+        {
+            "scene_id": "robothor_scene_02",
+            "timestamp": "2026-09-01T07:07:40.543474Z",
+            "rendered_image_name": "robothor_scene_02_rendered_9db2d3cf.png",
+            "original_image_path": "Original_Images/robothor_scene_02.jpg",
+            "modified_image_path": "Modified_Images/robothor_scene_02_modified.png",
+            "user_interactions": {
+                "removed_objects": []
+            }
+        },
+        {
+            "scene_id": "robothor_scene_03",
+            "timestamp": "2026-09-01T07:07:59.764068Z",
+            "rendered_image_name": "robothor_scene_03_rendered_0ccb9e62.png",
+            "original_image_path": "Original_Images/robothor_scene_03.jpg",
+            "modified_image_path": "Modified_Images/robothor_scene_03_modified.png",
+            "user_interactions": {
+                "removed_objects": []
+            }
+        }
+    ]
+}
