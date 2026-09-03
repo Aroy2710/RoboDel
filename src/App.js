@@ -25,7 +25,6 @@ function App() {
   const originalImage = `/Original_Images/${baseSceneName}.jpg`;
   const modifiedImage = `/Modified_Images/${baseSceneName}_modified.jpg`;
 
-  // Always begin with the 5s fixation cross on initial load & scene changes
   const [phase, setPhase] = useState(PHASES.FIXATION);
   const [fixationTimeLeft, setFixationTimeLeft] = useState(FIXATION_DURATION_SECONDS);
   const [timeLeft, setTimeLeft] = useState(OBSERVATION_DURATION_SECONDS);
@@ -280,14 +279,14 @@ function App() {
 
   return (
     <div className="app-container">
-      {/* 1. Red Fixation Cross Screen (5s on all scenes) */}
+      {/* 1. Red Fixation Cross Screen (5s duration) */}
       {phase === PHASES.FIXATION && (
         <div className="fixation-screen">
           <div className="fixation-cross" />
         </div>
       )}
 
-      {/* 2. Instructions Screen (Appears immediately after fixation ONLY for Scene 1) */}
+      {/* 2. Instructions Screen (Scene 1 only) */}
       {phase === PHASES.INSTRUCTIONS && (
         <div className="instructions-screen">
           <div className="instructions-card">
@@ -295,19 +294,15 @@ function App() {
             <ul>
               <li>
                 <span className="step-num">1</span>
-                <div><strong>Observe:</strong> You will view a scene for 10 seconds. Look at any part of the image</div>
+                <div><strong>Observe:</strong> You will view the original reference scene for 10 seconds. Memorize the objects and their positions.</div>
               </li>
               <li>
                 <span className="step-num">2</span>
-                <div><strong>Modify:</strong> The scene will be shown to you again , it might or might not be modified. click on the objects that you think were not in the original scene</div>
+                <div><strong>Modify:</strong> Click on modified objects in the interactive panel to inpaint and remove them.</div>
               </li>
               <li>
                 <span className="step-num">3</span>
-                <div>On the right of the interactive scene, a new image will be shown with the object removed </div>
-              </li>
-              <li>
-                <span className="step-num">4</span>
-                <div><strong>Save:</strong> Once you are decided what the original scene looked like - click "Save & Next" to immediately save your results and advance.</div>
+                <div><strong>Save:</strong> Click "Save & Next" to immediately save your results to the server and advance.</div>
               </li>
             </ul>
             <button 
@@ -320,12 +315,9 @@ function App() {
         </div>
       )}
 
-      {/* 3. Fullscreen Observation Phase (10s duration) */}
+      {/* 3. Fullscreen Observation Phase (10s duration, no overlays) */}
       {phase === PHASES.OBSERVATION && (
         <div className="observable-screen">
-          <div className="observable-timer-badge">
-            Scene {sceneIndex + 1}/{sceneList.length} | {timeLeft}s remaining
-          </div>
           <img 
             src={originalImage} 
             alt="Observation View" 
@@ -367,7 +359,7 @@ function App() {
           <div className="interactive-windows-grid">
             {/* Left Interactive Target Panel */}
             <div className="interactive-card">
-              <div className="interactive-card-title">Interactive Scene</div>
+              <div className="interactive-card-title">Interactive Target Canvas</div>
               <div className="interactive-viewport-wrapper">
                 <div style={{ position: 'relative', display: 'inline-block', lineHeight: 0, maxHeight: '100%', maxWidth: '100%' }}>
                   <img
@@ -407,7 +399,7 @@ function App() {
 
             {/* Right Inpainted Result View */}
             <div className="interactive-card">
-              <div className="interactive-card-title">Current Scene State</div>
+              <div className="interactive-card-title">Current Inpainted State</div>
               <div className="interactive-viewport-wrapper">
                 <img 
                   src={displayImage} 
