@@ -294,11 +294,11 @@ function App() {
             <ul>
               <li>
                 <span className="step-num">1</span>
-                <div><strong>Observe:</strong> You will view the original reference scene for 10 seconds. Memorize the objects and their positions.</div>
+                <div><strong>Observe:</strong> You will view the original scene for 10 seconds. Observer the scene however you want.</div>
               </li>
               <li>
                 <span className="step-num">2</span>
-                <div><strong>Modify:</strong> Click on modified objects in the interactive panel to inpaint and remove them.</div>
+                <div><strong>Modify:</strong> The image will be shown to you again with newer objects . Click to remove objects that you believe were not in the original image.</div>
               </li>
               <li>
                 <span className="step-num">3</span>
@@ -359,7 +359,7 @@ function App() {
           <div className="interactive-windows-grid">
             {/* Left Interactive Target Panel */}
             <div className="interactive-card">
-              <div className="interactive-card-title">Interactive Target Canvas</div>
+              <div className="interactive-card-title">Interactive Image(Remove objects that were not in the original image) </div>
               <div className="interactive-viewport-wrapper">
                 <div style={{ position: 'relative', display: 'inline-block', lineHeight: 0, maxHeight: '100%', maxWidth: '100%' }}>
                   <img
@@ -399,7 +399,7 @@ function App() {
 
             {/* Right Inpainted Result View */}
             <div className="interactive-card">
-              <div className="interactive-card-title">Current Inpainted State</div>
+              <div className="interactive-card-title">Current Render</div>
               <div className="interactive-viewport-wrapper">
                 <img 
                   src={displayImage} 

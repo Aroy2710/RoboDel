@@ -1,0 +1,9 @@
+label_name,bbox_x,bbox_y,bbox_width,bbox_height,image_name,image_width,image_height
+Apple,737,687,91,76,robothor_scene_01_modified.jpg,2256,934
+Bread,1016,575,124,100,robothor_scene_01_modified.jpg,2256,934
+Cup,1980,781,170,139,robothor_scene_01_modified.jpg,2256,934
+Lettuce,1728,641,173,109,robothor_scene_01_modified.jpg,2256,934
+Book,249,602,452,149,robothor_scene_01_modified.jpg,2256,934
+Bowl,1028,502,52,39,robothor_scene_01_modified.jpg,2256,934
+Tomato,1210,517,39,55,robothor_scene_01_modified.jpg,2256,934
+Pan ,922,687,112,70,robothor_scene_01_modified.jpg,2256,934

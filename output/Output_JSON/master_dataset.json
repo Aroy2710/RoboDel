@@ -88,6 +88,104 @@
             "user_interactions": {
                 "removed_objects": []
             }
+        },
+        {
+            "scene_id": "robothor_scene_01",
+            "timestamp": "2026-09-03T04:30:22.479268Z",
+            "rendered_image_name": "robothor_scene_01_rendered_52f196bc.png",
+            "original_image_path": "Original_Images/robothor_scene_01.jpg",
+            "modified_image_path": "Modified_Images/robothor_scene_01_modified.png",
+            "user_interactions": {
+                "removed_objects": []
+            }
+        },
+        {
+            "scene_id": "robothor_scene_01",
+            "timestamp": "2026-09-03T04:36:27.119800Z",
+            "rendered_image_name": "robothor_scene_01_rendered_13563339.png",
+            "original_image_path": "Original_Images/robothor_scene_01.jpg",
+            "modified_image_path": "Modified_Images/robothor_scene_01_modified.png",
+            "user_interactions": {
+                "removed_objects": []
+            }
+        },
+        {
+            "scene_id": "robothor_scene_01",
+            "timestamp": "2026-09-03T04:43:04.796576Z",
+            "rendered_image_name": "robothor_scene_01_rendered_742444f6.png",
+            "original_image_path": "Original_Images/robothor_scene_01.jpg",
+            "modified_image_path": "Modified_Images/robothor_scene_01_modified.png",
+            "user_interactions": {
+                "removed_objects": []
+            }
+        },
+        {
+            "scene_id": "robothor_scene_02",
+            "timestamp": "2026-09-03T04:43:23.252726Z",
+            "rendered_image_name": "robothor_scene_02_rendered_3647b0f3.png",
+            "original_image_path": "Original_Images/robothor_scene_02.jpg",
+            "modified_image_path": "Modified_Images/robothor_scene_02_modified.png",
+            "user_interactions": {
+                "removed_objects": []
+            }
+        },
+        {
+            "scene_id": "robothor_scene_01",
+            "timestamp": "2026-09-03T04:45:37.032537Z",
+            "rendered_image_name": "robothor_scene_01_rendered_f2cd61ae.png",
+            "original_image_path": "Original_Images/robothor_scene_01.jpg",
+            "modified_image_path": "Modified_Images/robothor_scene_01_modified.png",
+            "user_interactions": {
+                "removed_objects": [
+                    {
+                        "object_id": 4,
+                        "click_position": {
+                            "x": 1799,
+                            "y": 693
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            "scene_id": "robothor_scene_02",
+            "timestamp": "2026-09-03T04:46:54.034340Z",
+            "rendered_image_name": "robothor_scene_02_rendered_6beb631d.png",
+            "original_image_path": "Original_Images/robothor_scene_02.jpg",
+            "modified_image_path": "Modified_Images/robothor_scene_02_modified.png",
+            "user_interactions": {
+                "removed_objects": []
+            }
+        },
+        {
+            "scene_id": "robothor_scene_01",
+            "timestamp": "2026-09-03T04:47:32.371906Z",
+            "rendered_image_name": "robothor_scene_01_rendered_67abcfa6.png",
+            "original_image_path": "Original_Images/robothor_scene_01.jpg",
+            "modified_image_path": "Modified_Images/robothor_scene_01_modified.png",
+            "user_interactions": {
+                "removed_objects": []
+            }
+        },
+        {
+            "scene_id": "robothor_scene_02",
+            "timestamp": "2026-09-03T04:47:50.853567Z",
+            "rendered_image_name": "robothor_scene_02_rendered_d203b527.png",
+            "original_image_path": "Original_Images/robothor_scene_02.jpg",
+            "modified_image_path": "Modified_Images/robothor_scene_02_modified.png",
+            "user_interactions": {
+                "removed_objects": []
+            }
+        },
+        {
+            "scene_id": "robothor_scene_03",
+            "timestamp": "2026-09-03T04:48:19.971668Z",
+            "rendered_image_name": "robothor_scene_03_rendered_6e3fcbaa.png",
+            "original_image_path": "Original_Images/robothor_scene_03.jpg",
+            "modified_image_path": "Modified_Images/robothor_scene_03_modified.png",
+            "user_interactions": {
+                "removed_objects": []
+            }
         }
     ]
 }
