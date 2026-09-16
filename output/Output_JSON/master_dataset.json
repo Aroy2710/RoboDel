@@ -2,190 +2,304 @@
     "dataset_version": "1.0",
     "sessions": [
         {
-            "scene_id": "robothor_scene_01",
-            "timestamp": "2026-09-01T06:58:01.999364Z",
-            "rendered_image_name": "robothor_scene_01_rendered_4c4c3ed8.png",
-            "original_image_path": "Original_Images/robothor_scene_01.jpg",
-            "modified_image_path": "Modified_Images/robothor_scene_01_modified.png",
-            "user_interactions": {
-                "removed_objects": []
-            }
-        },
-        {
-            "scene_id": "robothor_scene_02",
-            "timestamp": "2026-09-01T06:58:19.967554Z",
-            "rendered_image_name": "robothor_scene_02_rendered_c49177d4.png",
-            "original_image_path": "Original_Images/robothor_scene_02.jpg",
-            "modified_image_path": "Modified_Images/robothor_scene_02_modified.png",
-            "user_interactions": {
-                "removed_objects": [
-                    {
-                        "object_id": 1,
-                        "click_position": {
-                            "x": 689,
-                            "y": 826
-                        }
+            "removed_objects": [
+                {
+                    "object_id": 4,
+                    "label": "Bread",
+                    "bounding_box": {
+                        "x": 346,
+                        "y": 362,
+                        "width": 146,
+                        "height": 73
+                    },
+                    "click_position": {
+                        "x": 403,
+                        "y": 398
                     }
-                ]
-            }
-        },
-        {
-            "scene_id": "robothor_scene_03",
-            "timestamp": "2026-09-01T06:59:05.199456Z",
-            "rendered_image_name": "robothor_scene_03_rendered_3cda9208.png",
-            "original_image_path": "Original_Images/robothor_scene_03.jpg",
-            "modified_image_path": "Modified_Images/robothor_scene_03_modified.png",
-            "user_interactions": {
-                "removed_objects": []
-            }
-        },
-        {
-            "scene_id": "robothor_scene_01",
-            "timestamp": "2026-09-01T06:59:50.537910Z",
-            "rendered_image_name": "robothor_scene_01_rendered_7390f7c3.png",
-            "original_image_path": "Original_Images/robothor_scene_01.jpg",
-            "modified_image_path": "Modified_Images/robothor_scene_01_modified.png",
-            "user_interactions": {
-                "removed_objects": []
-            }
-        },
-        {
-            "scene_id": "robothor_scene_01",
-            "timestamp": "2026-09-01T07:00:59.183924Z",
-            "rendered_image_name": "robothor_scene_01_rendered_a5ecaa9a.png",
-            "original_image_path": "Original_Images/robothor_scene_01.jpg",
-            "modified_image_path": "Modified_Images/robothor_scene_01_modified.png",
-            "user_interactions": {
-                "removed_objects": []
-            }
-        },
-        {
-            "scene_id": "robothor_scene_01",
-            "timestamp": "2026-09-01T07:07:22.818335Z",
-            "rendered_image_name": "robothor_scene_01_rendered_ddb84f45.png",
-            "original_image_path": "Original_Images/robothor_scene_01.jpg",
-            "modified_image_path": "Modified_Images/robothor_scene_01_modified.png",
-            "user_interactions": {
-                "removed_objects": []
-            }
-        },
-        {
-            "scene_id": "robothor_scene_02",
-            "timestamp": "2026-09-01T07:07:40.543474Z",
-            "rendered_image_name": "robothor_scene_02_rendered_9db2d3cf.png",
-            "original_image_path": "Original_Images/robothor_scene_02.jpg",
-            "modified_image_path": "Modified_Images/robothor_scene_02_modified.png",
-            "user_interactions": {
-                "removed_objects": []
-            }
-        },
-        {
-            "scene_id": "robothor_scene_03",
-            "timestamp": "2026-09-01T07:07:59.764068Z",
-            "rendered_image_name": "robothor_scene_03_rendered_0ccb9e62.png",
-            "original_image_path": "Original_Images/robothor_scene_03.jpg",
-            "modified_image_path": "Modified_Images/robothor_scene_03_modified.png",
-            "user_interactions": {
-                "removed_objects": []
-            }
-        },
-        {
-            "scene_id": "robothor_scene_01",
-            "timestamp": "2026-09-03T04:30:22.479268Z",
-            "rendered_image_name": "robothor_scene_01_rendered_52f196bc.png",
-            "original_image_path": "Original_Images/robothor_scene_01.jpg",
-            "modified_image_path": "Modified_Images/robothor_scene_01_modified.png",
-            "user_interactions": {
-                "removed_objects": []
-            }
-        },
-        {
-            "scene_id": "robothor_scene_01",
-            "timestamp": "2026-09-03T04:36:27.119800Z",
-            "rendered_image_name": "robothor_scene_01_rendered_13563339.png",
-            "original_image_path": "Original_Images/robothor_scene_01.jpg",
-            "modified_image_path": "Modified_Images/robothor_scene_01_modified.png",
-            "user_interactions": {
-                "removed_objects": []
-            }
-        },
-        {
-            "scene_id": "robothor_scene_01",
-            "timestamp": "2026-09-03T04:43:04.796576Z",
-            "rendered_image_name": "robothor_scene_01_rendered_742444f6.png",
-            "original_image_path": "Original_Images/robothor_scene_01.jpg",
-            "modified_image_path": "Modified_Images/robothor_scene_01_modified.png",
-            "user_interactions": {
-                "removed_objects": []
-            }
-        },
-        {
-            "scene_id": "robothor_scene_02",
-            "timestamp": "2026-09-03T04:43:23.252726Z",
-            "rendered_image_name": "robothor_scene_02_rendered_3647b0f3.png",
-            "original_image_path": "Original_Images/robothor_scene_02.jpg",
-            "modified_image_path": "Modified_Images/robothor_scene_02_modified.png",
-            "user_interactions": {
-                "removed_objects": []
-            }
-        },
-        {
-            "scene_id": "robothor_scene_01",
-            "timestamp": "2026-09-03T04:45:37.032537Z",
-            "rendered_image_name": "robothor_scene_01_rendered_f2cd61ae.png",
-            "original_image_path": "Original_Images/robothor_scene_01.jpg",
-            "modified_image_path": "Modified_Images/robothor_scene_01_modified.png",
-            "user_interactions": {
-                "removed_objects": [
-                    {
-                        "object_id": 4,
-                        "click_position": {
-                            "x": 1799,
-                            "y": 693
-                        }
+                },
+                {
+                    "object_id": 1,
+                    "label": "Apple",
+                    "bounding_box": {
+                        "x": 187,
+                        "y": 367,
+                        "width": 64,
+                        "height": 46
+                    },
+                    "click_position": {
+                        "x": 216,
+                        "y": 385
                     }
-                ]
-            }
+                }
+            ],
+            "removed_labels": [
+                "bread",
+                "apple"
+            ],
+            "base_scene_name": "Trial_1_FP1_Island",
+            "final_image_path": "/Prerendered_Scenes/Trial_1_FP1_Island/removed_apple_bread.png",
+            "session_id": "session_1789561038",
+            "saved_image_path": "output/Output_Images/session_1789561038_Trial_1_FP1_Island.png"
         },
         {
-            "scene_id": "robothor_scene_02",
-            "timestamp": "2026-09-03T04:46:54.034340Z",
-            "rendered_image_name": "robothor_scene_02_rendered_6beb631d.png",
-            "original_image_path": "Original_Images/robothor_scene_02.jpg",
-            "modified_image_path": "Modified_Images/robothor_scene_02_modified.png",
-            "user_interactions": {
-                "removed_objects": []
-            }
+            "removed_objects": [
+                {
+                    "object_id": 2,
+                    "label": "Bread",
+                    "bounding_box": {
+                        "x": 799,
+                        "y": 542,
+                        "width": 93,
+                        "height": 76
+                    },
+                    "click_position": {
+                        "x": 843,
+                        "y": 577
+                    }
+                },
+                {
+                    "object_id": 3,
+                    "label": "Egg",
+                    "bounding_box": {
+                        "x": 889,
+                        "y": 590,
+                        "width": 48,
+                        "height": 47
+                    },
+                    "click_position": {
+                        "x": 905,
+                        "y": 609
+                    }
+                }
+            ],
+            "removed_labels": [
+                "bread",
+                "egg"
+            ],
+            "base_scene_name": "Trial_2_FP2_Table",
+            "final_image_path": "/Prerendered_Scenes/Trial_2_FP2_Table/removed_bread_egg.png",
+            "session_id": "session_1789561068",
+            "saved_image_path": "output/Output_Images/session_1789561068_Trial_2_FP2_Table.png"
         },
         {
-            "scene_id": "robothor_scene_01",
-            "timestamp": "2026-09-03T04:47:32.371906Z",
-            "rendered_image_name": "robothor_scene_01_rendered_67abcfa6.png",
-            "original_image_path": "Original_Images/robothor_scene_01.jpg",
-            "modified_image_path": "Modified_Images/robothor_scene_01_modified.png",
-            "user_interactions": {
-                "removed_objects": []
-            }
+            "removed_objects": [
+                {
+                    "object_id": 4,
+                    "label": "Bread",
+                    "bounding_box": {
+                        "x": 346,
+                        "y": 362,
+                        "width": 146,
+                        "height": 73
+                    },
+                    "click_position": {
+                        "x": 411,
+                        "y": 382
+                    }
+                },
+                {
+                    "object_id": 6,
+                    "label": "Tomato",
+                    "bounding_box": {
+                        "x": 739,
+                        "y": 363,
+                        "width": 44,
+                        "height": 36
+                    },
+                    "click_position": {
+                        "x": 768,
+                        "y": 369
+                    }
+                },
+                {
+                    "object_id": 3,
+                    "label": "Bowl",
+                    "bounding_box": {
+                        "x": 678,
+                        "y": 289,
+                        "width": 45,
+                        "height": 29
+                    },
+                    "click_position": {
+                        "x": 696,
+                        "y": 296
+                    }
+                },
+                {
+                    "object_id": 1,
+                    "label": "Apple",
+                    "bounding_box": {
+                        "x": 187,
+                        "y": 367,
+                        "width": 64,
+                        "height": 46
+                    },
+                    "click_position": {
+                        "x": 227,
+                        "y": 380
+                    }
+                }
+            ],
+            "removed_labels": [
+                "bread",
+                "tomato",
+                "bowl",
+                "apple"
+            ],
+            "base_scene_name": "Trial_1_FP1_Island",
+            "final_image_path": "/Prerendered_Scenes/Trial_1_FP1_Island/removed_apple_bowl_bread_tomato.png",
+            "session_id": "session_1789561235",
+            "saved_image_path": "output/Output_Images/session_1789561235_Trial_1_FP1_Island.png"
         },
         {
-            "scene_id": "robothor_scene_02",
-            "timestamp": "2026-09-03T04:47:50.853567Z",
-            "rendered_image_name": "robothor_scene_02_rendered_d203b527.png",
-            "original_image_path": "Original_Images/robothor_scene_02.jpg",
-            "modified_image_path": "Modified_Images/robothor_scene_02_modified.png",
-            "user_interactions": {
-                "removed_objects": []
-            }
+            "removed_objects": [
+                {
+                    "object_id": 2,
+                    "label": "Bread",
+                    "bounding_box": {
+                        "x": 799,
+                        "y": 542,
+                        "width": 93,
+                        "height": 76
+                    },
+                    "click_position": {
+                        "x": 848,
+                        "y": 575
+                    }
+                }
+            ],
+            "removed_labels": [
+                "bread"
+            ],
+            "base_scene_name": "Trial_2_FP2_Table",
+            "final_image_path": "/Prerendered_Scenes/Trial_2_FP2_Table/removed_bread.png",
+            "session_id": "session_1789561262",
+            "saved_image_path": "output/Output_Images/session_1789561262_Trial_2_FP2_Table.png"
         },
         {
-            "scene_id": "robothor_scene_03",
-            "timestamp": "2026-09-03T04:48:19.971668Z",
-            "rendered_image_name": "robothor_scene_03_rendered_6e3fcbaa.png",
-            "original_image_path": "Original_Images/robothor_scene_03.jpg",
-            "modified_image_path": "Modified_Images/robothor_scene_03_modified.png",
-            "user_interactions": {
-                "removed_objects": []
-            }
+            "removed_objects": [
+                {
+                    "object_id": 4,
+                    "label": "Bread",
+                    "bounding_box": {
+                        "x": 346,
+                        "y": 362,
+                        "width": 146,
+                        "height": 73
+                    },
+                    "click_position": {
+                        "x": 404,
+                        "y": 410
+                    }
+                },
+                {
+                    "object_id": 5,
+                    "label": "Tomato",
+                    "bounding_box": {
+                        "x": 739,
+                        "y": 363,
+                        "width": 44,
+                        "height": 36
+                    },
+                    "click_position": {
+                        "x": 763,
+                        "y": 373
+                    }
+                },
+                {
+                    "object_id": 2,
+                    "label": "Book",
+                    "bounding_box": {
+                        "x": 294,
+                        "y": 292,
+                        "width": 125,
+                        "height": 57
+                    },
+                    "click_position": {
+                        "x": 353,
+                        "y": 307
+                    }
+                },
+                {
+                    "object_id": 1,
+                    "label": "Apple",
+                    "bounding_box": {
+                        "x": 187,
+                        "y": 367,
+                        "width": 64,
+                        "height": 46
+                    },
+                    "click_position": {
+                        "x": 221,
+                        "y": 387
+                    }
+                }
+            ],
+            "removed_labels": [
+                "bread",
+                "tomato",
+                "book",
+                "apple"
+            ],
+            "base_scene_name": "Trial_1_FP1_Island",
+            "final_image_path": "/Prerendered_Scenes/Trial_1_FP1_Island/removed_apple_book_bread_tomato.png",
+            "session_id": "session_1789563358",
+            "saved_image_path": "output/Output_Images/session_1789563358_Trial_1_FP1_Island.png"
+        },
+        {
+            "removed_objects": [
+                {
+                    "object_id": 1,
+                    "label": "Bowl",
+                    "bounding_box": {
+                        "x": 383,
+                        "y": 528,
+                        "width": 91,
+                        "height": 73
+                    },
+                    "click_position": {
+                        "x": 417,
+                        "y": 566
+                    }
+                },
+                {
+                    "object_id": 2,
+                    "label": "Bread",
+                    "bounding_box": {
+                        "x": 799,
+                        "y": 542,
+                        "width": 93,
+                        "height": 76
+                    },
+                    "click_position": {
+                        "x": 861,
+                        "y": 574
+                    }
+                },
+                {
+                    "object_id": 3,
+                    "label": "Egg",
+                    "bounding_box": {
+                        "x": 889,
+                        "y": 590,
+                        "width": 48,
+                        "height": 47
+                    },
+                    "click_position": {
+                        "x": 903,
+                        "y": 607
+                    }
+                }
+            ],
+            "removed_labels": [
+                "bowl",
+                "bread",
+                "egg"
+            ],
+            "base_scene_name": "Trial_2_FP2_Table",
+            "final_image_path": "/Prerendered_Scenes/Trial_2_FP2_Table/removed_bowl_bread_egg.png",
+            "session_id": "session_1789563383",
+            "saved_image_path": "output/Output_Images/session_1789563383_Trial_2_FP2_Table.png"
         }
     ]
 }
