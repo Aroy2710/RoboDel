@@ -300,6 +300,22 @@
             "final_image_path": "/Prerendered_Scenes/Trial_2_FP2_Table/removed_bowl_bread_egg.png",
             "session_id": "session_1789563383",
             "saved_image_path": "output/Output_Images/session_1789563383_Trial_2_FP2_Table.png"
+        },
+        {
+            "removed_objects": [],
+            "removed_labels": [],
+            "base_scene_name": "Trial_1_FP1_Island",
+            "final_image_path": "/Prerendered_Scenes/Trial_1_FP1_Island/base.png",
+            "session_id": "session_1790038233",
+            "saved_image_path": "output/Output_Images/session_1790038233_Trial_1_FP1_Island.png"
+        },
+        {
+            "removed_objects": [],
+            "removed_labels": [],
+            "base_scene_name": "Trial_1_FP1_Island",
+            "final_image_path": "/Prerendered_Scenes/Trial_1_FP1_Island/base.png",
+            "session_id": "session_1790038269",
+            "saved_image_path": "output/Output_Images/session_1790038269_Trial_1_FP1_Island.png"
         }
     ]
 }

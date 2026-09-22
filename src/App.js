@@ -26,8 +26,8 @@ function App() {
   const [currentTrialIndex, setCurrentTrialIndex] = useState(0);
   const activeFolder = TRIAL_SEQUENCE[currentTrialIndex] || TRIAL_SEQUENCE[0];
 
-  // Dynamic paths based on active trial folder
-  const modifiedImage = `/Prerendered_Scenes/${activeFolder}/base.png`;
+  // Dynamic paths based on active trial folder - Updated to .jpg
+  const modifiedImage = `/Prerendered_Scenes/${activeFolder}/base.jpg`;
   const originalImage = modifiedImage;
 
   const [phase, setPhase] = useState(PHASES.FIXATION);
@@ -147,7 +147,8 @@ function App() {
     setRemovedLabels(newRemovedLabels);
 
     const sortedLabels = [...newRemovedLabels].sort();
-    const filename = `removed_${sortedLabels.join('_')}.png`;
+    // Updated to target .jpg combinatorial files
+    const filename = `removed_${sortedLabels.join('_')}.jpg`;
 
     const newImageSrc = `/Prerendered_Scenes/${activeFolder}/${filename}`;
 
