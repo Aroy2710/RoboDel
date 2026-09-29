@@ -12,15 +12,13 @@ const PHASES = {
 };
 
 const FIXATION_DURATION_SECONDS = 5;
-const OBSERVATION_DURATION_SECONDS = 10;
+const OBSERVATION_DURATION_SECONDS = 1000000; // Reduced to 5 seconds
 
 // Sequence of trial directories
 const TRIAL_SEQUENCE = [
   "Trial_1_FP1_Island",
   "Trial_2_FP2_Table"
 ];
-
-const BASE_SCENE_NAME = "robothor_scene_01";
 
 function App() {
   const [currentTrialIndex, setCurrentTrialIndex] = useState(0);
@@ -37,6 +35,13 @@ function App() {
 
   const [displayImage, setDisplayImage] = useState(modifiedImage);
   const workingImageRef = useRef(null);
+  
+  // Canvas and Telemetry Refs
+  const canvasRef = useRef(null);
+  const blurredCanvasRef = useRef(document.createElement('canvas'));
+  const telemetryRef = useRef([]);
+  const renderFrameRef = useRef();
+  const currentMouseRef = useRef({ x: 0, y: 0 });
 
   const [removedObjects, setRemovedObjects] = useState([]);
   const [removedLabels, setRemovedLabels] = useState([]);
@@ -51,6 +56,8 @@ function App() {
     setTimeLeft(OBSERVATION_DURATION_SECONDS);
     setFixationTimeLeft(FIXATION_DURATION_SECONDS);
     setPhase(PHASES.FIXATION);
+    telemetryRef.current = []; // Reset telemetry for new trial
+    currentMouseRef.current = { x: 0, y: 0 }; 
 
     const ref = new Image();
     ref.crossOrigin = "anonymous";
@@ -85,18 +92,109 @@ function App() {
     }
   }, [fixationTimeLeft, phase]);
 
-  // Observation Timer
+  // SALICON Mouse-Contingent Rendering & Telemetry Logic
   useEffect(() => {
-    if (phase === PHASES.OBSERVATION) {
-      if (timeLeft > 0) {
-        const timerId = setTimeout(() => setTimeLeft(timeLeft - 1), 1000);
-        return () => clearTimeout(timerId);
-      } else {
+    if (phase === PHASES.OBSERVATION && naturalDims && workingImageRef.current) {
+      const canvas = canvasRef.current;
+      if (!canvas) return;
+      
+      const ctx = canvas.getContext('2d');
+      const img = workingImageRef.current;
+
+      canvas.width = img.naturalWidth;
+      canvas.height = img.naturalHeight;
+
+      const bCanvas = blurredCanvasRef.current;
+      bCanvas.width = img.naturalWidth;
+      bCanvas.height = img.naturalHeight;
+      const bCtx = bCanvas.getContext('2d');
+      bCtx.filter = 'blur(15px)'; // A6 equivalent extreme Gaussian low-pass
+      bCtx.drawImage(img, 0, 0);
+
+      // SALICON Mathematical Constants
+      const P_PX_PER_DEG = 29.719; // Target viewing distance parameter
+      const ALPHA_DEG = 2.5;       // 50% sharpness visual angle
+      const CURSOR_DEG = 2.0;      // Visible cursor ring radius
+
+      // Convert visual angles to physical pixel radii
+      const alpha_px = P_PX_PER_DEG * ALPHA_DEG;          
+      const cursor_radius_px = P_PX_PER_DEG * CURSOR_DEG; 
+
+      // Max radius large enough to cover the screen corners
+      const MAX_BLEND_RADIUS = Math.max(canvas.width, canvas.height); 
+
+      const handleMouseMove = (e) => {
+        const rect = canvas.getBoundingClientRect();
+        const scaleX = canvas.width / rect.width;
+        const scaleY = canvas.height / rect.height;
+        const x = (e.clientX - rect.left) * scaleX;
+        const y = (e.clientY - rect.top) * scaleY;
+
+        currentMouseRef.current = { x, y };
+
+        if (renderFrameRef.current) cancelAnimationFrame(renderFrameRef.current);
+        renderFrameRef.current = requestAnimationFrame(() => {
+          ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+          // 1. Draw the fully blurred low-res image (A_i)
+          ctx.globalCompositeOperation = 'source-over';
+          ctx.drawImage(bCanvas, 0, 0);
+
+          // 2. Erase the blur using Formula: R(x,y) = alpha / (alpha + theta)
+          ctx.globalCompositeOperation = 'destination-out';
+          const gradient = ctx.createRadialGradient(x, y, 0, x, y, MAX_BLEND_RADIUS);
+          
+          const numStops = 40; 
+          for (let i = 0; i <= numStops; i++) {
+              const fraction = Math.pow(i / numStops, 2); 
+              const r = fraction * MAX_BLEND_RADIUS;
+              
+              const R_val = alpha_px / (alpha_px + r); 
+              gradient.addColorStop(fraction, `rgba(0, 0, 0, ${R_val})`);
+          }
+
+          ctx.fillStyle = gradient;
+          ctx.beginPath();
+          ctx.rect(0, 0, canvas.width, canvas.height);
+          ctx.fill();
+
+          // 3. Draw the high-res crisp image BEHIND the erased mask (I_high)
+          ctx.globalCompositeOperation = 'destination-over';
+          ctx.drawImage(img, 0, 0);
+
+          // 4. Draw the visible red cursor ring
+          ctx.globalCompositeOperation = 'source-over';
+          ctx.strokeStyle = 'rgba(255, 0, 0, 0.65)';
+          ctx.lineWidth = 2 * scaleX; 
+          ctx.beginPath();
+          ctx.arc(x, y, cursor_radius_px, 0, 2 * Math.PI);
+          ctx.stroke();
+        });
+      };
+
+      canvas.addEventListener('mousemove', handleMouseMove);
+      
+      // Telemetry recorded strictly at 300ms intervals
+      const telemetryIntervalId = setInterval(() => {
+        const { x, y } = currentMouseRef.current;
+        if (x !== 0 || y !== 0) {
+          telemetryRef.current.push({ t: performance.now(), x: Math.round(x), y: Math.round(y) });
+        }
+      }, 300);
+
+      const timerId = setTimeout(() => {
         setPhase(PHASES.TRANSITION);
         setTimeout(() => setPhase(PHASES.INTERACTIVE), 500);
-      }
+      }, OBSERVATION_DURATION_SECONDS * 1000);
+
+      return () => {
+        canvas.removeEventListener('mousemove', handleMouseMove);
+        clearInterval(telemetryIntervalId);
+        clearTimeout(timerId);
+        if (renderFrameRef.current) cancelAnimationFrame(renderFrameRef.current);
+      };
     }
-  }, [timeLeft, phase]);
+  }, [phase, naturalDims]);
 
   const handleImageClick = (event) => {
     if (isProcessing || !naturalDims || !workingImageRef.current) return;
@@ -110,7 +208,6 @@ function App() {
     const x = Math.round((event.clientX - rect.left) * scaleX);
     const y = Math.round((event.clientY - rect.top) * scaleY);
 
-    // Removed the !box.isClicked condition so users can click already-clicked boxes
     const clickedBoxIndex = boundingboxes.findIndex(box =>
       x >= box.x && x <= box.x + box.width &&
       y >= box.y && y <= box.y + box.height
@@ -126,11 +223,9 @@ function App() {
     let newRemovedObjects;
 
     if (isCurrentlyClicked) {
-      // UNDO ACTION: Remove the label and object payload from the tracked arrays
       newRemovedLabels = removedLabels.filter(label => label !== clickedLabel);
       newRemovedObjects = removedObjects.filter(obj => obj.object_id !== targetBox.id);
     } else {
-      // REMOVE ACTION: Add the label and object payload to the tracked arrays
       newRemovedLabels = [...removedLabels, clickedLabel];
       newRemovedObjects = [...removedObjects, {
         object_id: targetBox.id,
@@ -143,7 +238,6 @@ function App() {
     setRemovedLabels(newRemovedLabels);
     setRemovedObjects(newRemovedObjects);
 
-    // If no labels are currently removed, revert to base.jpg, otherwise construct combinatorial filename
     const sortedLabels = [...newRemovedLabels].sort();
     const filename = sortedLabels.length === 0 
       ? "base.jpg" 
@@ -152,21 +246,29 @@ function App() {
     const newImageSrc = `/Prerendered_Scenes/${activeFolder}/${filename}`;
     setDisplayImage(newImageSrc);
 
-    // Toggle the box's isClicked state so the CSS border switches back and forth
     setBoundingBoxes(prev => prev.map((box, index) =>
       index === clickedBoxIndex ? { ...box, isClicked: !isCurrentlyClicked } : box
     ));
   };
 
-  // Save session & advance sequence
   const handleReviewAndSave = async () => {
     setIsProcessing(true);
     try {
+      const rawTelemetry = telemetryRef.current;
+      
+      const formattedTelemetry = {
+        X: rawTelemetry.map(p => Number(p.x.toFixed(1))),
+        Y: rawTelemetry.map(p => Number(p.y.toFixed(1))),
+        T: rawTelemetry.map(p => Math.round(p.t - (rawTelemetry.length > 0 ? rawTelemetry[0].t : 0))),
+        length: rawTelemetry.length
+      };
+
       await axios.post(`${API_URL}/save_session`, {
         removed_objects: removedObjects,
         removed_labels: removedLabels,
         base_scene_name: activeFolder,
-        final_image_path: displayImage
+        final_image_path: displayImage,
+        mouse_telemetry: formattedTelemetry 
       });
 
       if (currentTrialIndex + 1 < TRIAL_SEQUENCE.length) {
@@ -193,10 +295,10 @@ function App() {
       {/* 2. Observation Phase */}
       {phase === PHASES.OBSERVATION && (
         <div className="observable-screen">
-          <img
-            src={originalImage}
-            alt="Observation View"
+          <canvas
+            ref={canvasRef}
             className="observable-image"
+            style={{ pointerEvents: 'auto', cursor: 'none' }}
           />
         </div>
       )}
@@ -214,7 +316,6 @@ function App() {
           <div className="interactive-toolbar">
             <h2></h2>
             <div style={{ display: 'flex', gap: '12px' }}>
-              {/* The Undo button has been removed */}
               <button
                 onClick={handleReviewAndSave}
                 disabled={isProcessing}
