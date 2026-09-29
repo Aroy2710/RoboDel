@@ -2,6 +2,7 @@ import os
 import json
 import time
 import shutil
+from urllib.parse import unquote
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 from fastapi.middleware.cors import CORSMiddleware
@@ -22,11 +23,13 @@ class SessionData(BaseModel):
     base_scene_name: str
     final_image_path: str
 
-OUTPUT_DIR = "output"
+# 1. Use absolute paths based on this file's location so it works from any terminal context
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+OUTPUT_DIR = os.path.join(BASE_DIR, "output")
 JSON_DIR = os.path.join(OUTPUT_DIR, "Output_JSON")
 IMG_DIR = os.path.join(OUTPUT_DIR, "Output_Images")
 MASTER_JSON_PATH = os.path.join(JSON_DIR, "master_dataset.json")
-PUBLIC_DIR = "public"
+PUBLIC_DIR = os.path.join(BASE_DIR, "public")
 
 @app.post("/save_session")
 def save_session(data: SessionData):
@@ -49,21 +52,27 @@ def save_session(data: SessionData):
             except (json.JSONDecodeError, FileNotFoundError):
                 master_data = {"dataset_version": "1.0", "sessions": []}
                 
-        relative_img_path = data.final_image_path.lstrip("/")
+        # 2. Decode URL entities (e.g., %20) so the OS can read the real file path
+        clean_image_path = unquote(data.final_image_path)
+        relative_img_path = clean_image_path.lstrip("/")
         source_img_path = os.path.join(PUBLIC_DIR, relative_img_path)
         
-        dest_img_filename = f"{session_id}_{data.base_scene_name}.png"
+        # 3. Dynamically grab the correct extension (.jpg) instead of hardcoding .png
+        ext = os.path.splitext(clean_image_path)[1] or ".jpg"
+        dest_img_filename = f"{session_id}_{data.base_scene_name}{ext}"
         dest_img_path = os.path.join(IMG_DIR, dest_img_filename)
         
         if os.path.exists(source_img_path):
             shutil.copy2(source_img_path, dest_img_path)
+            # Store a clean relative path in the JSON for readability
+            saved_record_path = os.path.join("output", "Output_Images", dest_img_filename)
         else:
             print(f"Warning: Could not find image to copy at {source_img_path}")
-            dest_img_path = "Image not found locally"
+            saved_record_path = "Image not found locally"
 
         session_record = data.dict()
         session_record["session_id"] = session_id
-        session_record["saved_image_path"] = dest_img_path
+        session_record["saved_image_path"] = saved_record_path
         
         master_data["sessions"].append(session_record)
         
