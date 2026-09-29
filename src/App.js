@@ -26,7 +26,7 @@ function App() {
   const [currentTrialIndex, setCurrentTrialIndex] = useState(0);
   const activeFolder = TRIAL_SEQUENCE[currentTrialIndex] || TRIAL_SEQUENCE[0];
 
-  // Dynamic paths based on active trial folder - Updated to .jpg
+  // Dynamic paths based on active trial folder
   const modifiedImage = `/Prerendered_Scenes/${activeFolder}/base.jpg`;
   const originalImage = modifiedImage;
 
@@ -38,7 +38,6 @@ function App() {
   const [displayImage, setDisplayImage] = useState(modifiedImage);
   const workingImageRef = useRef(null);
 
-  const [imageHistory, setImageHistory] = useState([]);
   const [removedObjects, setRemovedObjects] = useState([]);
   const [removedLabels, setRemovedLabels] = useState([]);
   const [boundingboxes, setBoundingBoxes] = useState([]);
@@ -48,7 +47,6 @@ function App() {
   useEffect(() => {
     setDisplayImage(modifiedImage);
     setRemovedObjects([]);
-    setImageHistory([]);
     setRemovedLabels([]);
     setTimeLeft(OBSERVATION_DURATION_SECONDS);
     setFixationTimeLeft(FIXATION_DURATION_SECONDS);
@@ -100,26 +98,6 @@ function App() {
     }
   }, [timeLeft, phase]);
 
-  // Undo functionality
-  const handleUndo = () => {
-    if (imageHistory.length > 0) {
-      const previous = imageHistory[imageHistory.length - 1];
-
-      setDisplayImage(previous.display);
-      setRemovedLabels(previous.labelsState);
-
-      setImageHistory(imageHistory.slice(0, -1));
-      setRemovedObjects(prev => prev.slice(0, -1));
-
-      setBoundingBoxes(prev => prev.map((box, index) => {
-        if (index === previous.boxIndex) {
-          return { ...box, isClicked: false };
-        }
-        return box;
-      }));
-    }
-  };
-
   const handleImageClick = (event) => {
     if (isProcessing || !naturalDims || !workingImageRef.current) return;
 
@@ -132,8 +110,8 @@ function App() {
     const x = Math.round((event.clientX - rect.left) * scaleX);
     const y = Math.round((event.clientY - rect.top) * scaleY);
 
+    // Removed the !box.isClicked condition so users can click already-clicked boxes
     const clickedBoxIndex = boundingboxes.findIndex(box =>
-      !box.isClicked &&
       x >= box.x && x <= box.x + box.width &&
       y >= box.y && y <= box.y + box.height
     );
@@ -142,37 +120,42 @@ function App() {
 
     const targetBox = boundingboxes[clickedBoxIndex];
     const clickedLabel = targetBox.label.toLowerCase();
+    const isCurrentlyClicked = targetBox.isClicked;
 
-    const newRemovedLabels = [...removedLabels, clickedLabel];
+    let newRemovedLabels;
+    let newRemovedObjects;
+
+    if (isCurrentlyClicked) {
+      // UNDO ACTION: Remove the label and object payload from the tracked arrays
+      newRemovedLabels = removedLabels.filter(label => label !== clickedLabel);
+      newRemovedObjects = removedObjects.filter(obj => obj.object_id !== targetBox.id);
+    } else {
+      // REMOVE ACTION: Add the label and object payload to the tracked arrays
+      newRemovedLabels = [...removedLabels, clickedLabel];
+      newRemovedObjects = [...removedObjects, {
+        object_id: targetBox.id,
+        label: targetBox.label,
+        bounding_box: { x: targetBox.x, y: targetBox.y, width: targetBox.width, height: targetBox.height },
+        click_position: { x, y }
+      }];
+    }
+
     setRemovedLabels(newRemovedLabels);
+    setRemovedObjects(newRemovedObjects);
 
+    // If no labels are currently removed, revert to base.jpg, otherwise construct combinatorial filename
     const sortedLabels = [...newRemovedLabels].sort();
-    // Updated to target .jpg combinatorial files
-    const filename = `removed_${sortedLabels.join('_')}.jpg`;
+    const filename = sortedLabels.length === 0 
+      ? "base.jpg" 
+      : `removed_${sortedLabels.join('_')}.jpg`;
 
     const newImageSrc = `/Prerendered_Scenes/${activeFolder}/${filename}`;
-
-    setImageHistory(prev => [
-      ...prev,
-      {
-        display: displayImage,
-        labelsState: [...removedLabels],
-        boxIndex: clickedBoxIndex
-      }
-    ]);
-
     setDisplayImage(newImageSrc);
 
+    // Toggle the box's isClicked state so the CSS border switches back and forth
     setBoundingBoxes(prev => prev.map((box, index) =>
-      index === clickedBoxIndex ? { ...box, isClicked: true } : box
+      index === clickedBoxIndex ? { ...box, isClicked: !isCurrentlyClicked } : box
     ));
-
-    setRemovedObjects(prev => [...prev, {
-      object_id: targetBox.id,
-      label: targetBox.label,
-      bounding_box: { x: targetBox.x, y: targetBox.y, width: targetBox.width, height: targetBox.height },
-      click_position: { x, y }
-    }]);
   };
 
   // Save session & advance sequence
@@ -231,13 +214,7 @@ function App() {
           <div className="interactive-toolbar">
             <h2></h2>
             <div style={{ display: 'flex', gap: '12px' }}>
-              <button
-                onClick={handleUndo}
-                disabled={imageHistory.length === 0 || isProcessing}
-                className="btn-secondary"
-              >
-                Undo Last Action
-              </button>
+              {/* The Undo button has been removed */}
               <button
                 onClick={handleReviewAndSave}
                 disabled={isProcessing}
@@ -280,7 +257,7 @@ function App() {
                           height: `${heightPercent}%`,
                           border: `2px solid ${box.isClicked ? '#ef4444' : '#22c55e'}`,
                           backgroundColor: box.isClicked ? 'rgba(239, 68, 68, 0.25)' : 'rgba(34, 197, 94, 0.15)',
-                          pointerEvents: 'none'
+                          pointerEvents: 'none' /* Prevents the box from blocking the image click */
                         }}
                       />
                     );
