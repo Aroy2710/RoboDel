@@ -1,0 +1,7 @@
+ai2thor>=5.0.0
+numpy
+opencv-python-headless
+pillow>=11.1.0
+fastapi
+uvicorn
+pydantic

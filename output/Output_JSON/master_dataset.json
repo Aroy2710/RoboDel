@@ -316,6 +316,46 @@
             "final_image_path": "/Prerendered_Scenes/Trial_1_FP1_Island/base.png",
             "session_id": "session_1790038269",
             "saved_image_path": "output/Output_Images/session_1790038269_Trial_1_FP1_Island.png"
+        },
+        {
+            "removed_objects": [
+                {
+                    "object_id": 5,
+                    "label": "Tomato",
+                    "bounding_box": {
+                        "x": 758,
+                        "y": 418,
+                        "width": 49,
+                        "height": 34
+                    },
+                    "click_position": {
+                        "x": 784,
+                        "y": 429
+                    }
+                },
+                {
+                    "object_id": 3,
+                    "label": "Bowl",
+                    "bounding_box": {
+                        "x": 635,
+                        "y": 357,
+                        "width": 39,
+                        "height": 23
+                    },
+                    "click_position": {
+                        "x": 659,
+                        "y": 361
+                    }
+                }
+            ],
+            "removed_labels": [
+                "tomato",
+                "bowl"
+            ],
+            "base_scene_name": "Trial_1_FP1_Island",
+            "final_image_path": "/Prerendered_Scenes/Trial_1_FP1_Island/removed_bowl_tomato.jpg",
+            "session_id": "session_1790646823",
+            "saved_image_path": "output/Output_Images/session_1790646823_Trial_1_FP1_Island.png"
         }
     ]
 }
