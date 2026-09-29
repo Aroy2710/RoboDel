@@ -138,16 +138,4 @@ CPU device, which renders silently and slowly (see the CPU section below).
 
 This file is a cache AI2-THOR never revalidates, so rewrite it whenever the set
 of visible GPUs changes.
-
-### Step 5 — Verify
-
-```bash
-conda deactivate && conda activate thor3d
-vulkaninfo --summary | grep -E "^GPU[0-9]|deviceName"   # expect your NVIDIA device
-python scripts/capture_scene.py --scene FloorPlan1 --out /tmp/thor3d-check \
-    --list-objects --gpu 1
-```
-
-The last command prints the editable objects in `FloorPlan1` and exits. On a GPU
-it takes a few seconds; if it instead hangs for 100 s and dies with
-`TimeoutError`, rendering fell back to the CPU — recheck steps 3 and 4.
+.
