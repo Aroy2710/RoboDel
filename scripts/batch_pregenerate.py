@@ -6,7 +6,9 @@ import itertools
 import shutil
 from PIL import Image
 
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+# Add repository root to Python path
+REPO_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+sys.path.insert(0, REPO_ROOT)
 from thor3d import ThorRenderer
 
 def main():
@@ -15,8 +17,8 @@ def main():
     parser.add_argument("--trial", default="Trial_1_FP1_Island", help="The output folder name (e.g., Trial_1_FP1_Island)")
     args = parser.parse_args()
 
-    # Output to the specific trial directory
-    out_dir = f"/data/roy/RoboDel/public/Prerendered_Scenes/{args.trial}"
+    # Dynamic path: resolves to <this_repo>/public/Prerendered_Scenes/<trial>
+    out_dir = os.path.join(REPO_ROOT, "public", "Prerendered_Scenes", args.trial)
     
     # Wipe the directory if it already exists to ensure a clean slate
     if os.path.exists(out_dir):
@@ -24,9 +26,8 @@ def main():
         shutil.rmtree(out_dir)
     os.makedirs(out_dir, exist_ok=True)
     
-    print(f"Initializing {args.scene} -> Saving to {args.trial}")
+    print(f"Initializing {args.scene} -> Saving to {out_dir}")
 
-    # Resolution reduced to 1024x576 to minimize pixel count and save storage space
     with ThorRenderer(width=1024, height=576, gpu_device=1, quality="Ultra") as r:
         r.controller.reset(
             scene=args.scene, 
@@ -34,7 +35,6 @@ def main():
             renderInstanceSegmentation=True
         )
         
-        # NOTE: Update these coordinates based on your web_explorer findings for this specific trial!
         event = r.controller.step(
             action="TeleportFull",
             x=-1.25,
@@ -51,7 +51,7 @@ def main():
         print(f"Saved base image: {base_path}")
 
         # 2. Extract Native 2D Bounding Boxes
-        target_types = {"Apple", "Bowl", "Bread",  "Tomato", "Book","Card" }
+        target_types = {"Apple", "Bowl", "Bread", "Tomato", "Book", "Card"}
         live_objects = event.metadata['objects']
         detections2D = event.instance_detections2D
         
@@ -100,10 +100,14 @@ def main():
                     r.controller.step(action="DisableObject", objectId=obj_id)
 
                 labels_removed = sorted([label for label, _ in combo])
-                # Change combinatorial files to .jpg and apply JPEG compression
                 filename = f"removed_{'_'.join(labels_removed)}.jpg"
                 
-                Image.fromarray(r.controller.last_event.frame).save(os.path.join(out_dir, filename), format="JPEG", quality=85)
+                Image.fromarray(r.controller.last_event.frame).save(
+                    os.path.join(out_dir, filename), 
+                    format="JPEG", 
+                    quality=85
+                )
+                print(f"-> Generated {filename}")
                 total_generated += 1
 
         for _, obj_id in items:
