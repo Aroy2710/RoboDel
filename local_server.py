@@ -22,6 +22,7 @@ class SessionData(BaseModel):
     removed_labels: list
     base_scene_name: str
     final_image_path: str
+    mouse_telemetry: dict  # Added for formatted SALICON telemetry payload
 
 # 1. Use absolute paths based on this file's location so it works from any terminal context
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
