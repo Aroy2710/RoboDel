@@ -4,26 +4,25 @@ import './App.css';
 
 const API_URL = "http://localhost:8000";
 const PHASES = {
-  ID_ENTRY: -3,      // Phase 1: Ask for Participant ID (only on first trial)
-  TARGET_PROMPT: -2, // Phase 2: Show the target object to find
-  FIXATION: -1,
+  ID_ENTRY: -4,      // Phase 1: Ask for Participant ID (only on first trial)
+  TARGET_PROMPT: -3, // Phase 2: Show the target object to find
+  BLANK_SCREEN: -2,  // Phase 3: 500ms pure black screen
+  FIXATION: -1,      // Phase 4: 500ms red cross
   OBSERVATION: 0,
   TRANSITION: 1,
   INTERACTIVE: 2,
   COMPLETED: 3
 };
 
-const FIXATION_DURATION_SECONDS = 5;
-
 // Sequences map 1:1. Trial index 0 gets Target index 0.
 const TRIAL_SEQUENCE = [
   "Trial_1_FP1_Island",
-  "Trial_2_FP2_Table"
+  "Trial_2_FP207_LivingRoom"
 ];
 
 const TARGET_SEQUENCE = [
   "Pan",
-  "Bread"
+  "Bottle"
 ];
 
 function App() {
@@ -40,7 +39,6 @@ function App() {
   
   // Start the application in the ID_ENTRY phase
   const [phase, setPhase] = useState(PHASES.ID_ENTRY);
-  const [fixationTimeLeft, setFixationTimeLeft] = useState(FIXATION_DURATION_SECONDS);
   const [isProcessing, setIsProcessing] = useState(false);
 
   const [displayImage, setDisplayImage] = useState(modifiedImage);
@@ -69,7 +67,6 @@ function App() {
     setDisplayImage(modifiedImage);
     setRemovedObjects([]);
     setRemovedLabels([]);
-    setFixationTimeLeft(FIXATION_DURATION_SECONDS);
     
     // If it's the first trial, ask for ID. Otherwise, skip straight to the Target Prompt.
     setPhase(currentTrialIndex === 0 ? PHASES.ID_ENTRY : PHASES.TARGET_PROMPT); 
@@ -97,16 +94,16 @@ function App() {
       .catch(error => console.error(`Failed to load bounding boxes for ${activeFolder}:`, error));
   }, [activeFolder, currentTrialIndex]);
 
+  // Handle the sequence: 500ms Blank Screen -> 500ms Fixation Cross -> Observation
   useEffect(() => {
-    if (phase === PHASES.FIXATION) {
-      if (fixationTimeLeft > 0) {
-        const timerId = setTimeout(() => setFixationTimeLeft(fixationTimeLeft - 1), 1000);
-        return () => clearTimeout(timerId);
-      } else {
-        setPhase(PHASES.OBSERVATION);
-      }
+    let timerId;
+    if (phase === PHASES.BLANK_SCREEN) {
+      timerId = setTimeout(() => setPhase(PHASES.FIXATION), 500);
+    } else if (phase === PHASES.FIXATION) {
+      timerId = setTimeout(() => setPhase(PHASES.OBSERVATION), 500);
     }
-  }, [fixationTimeLeft, phase]);
+    return () => clearTimeout(timerId);
+  }, [phase]);
 
   useEffect(() => {
     if (phase === PHASES.OBSERVATION && naturalDims && workingImageRef.current) {
@@ -281,6 +278,10 @@ function App() {
         base_scene_name: activeFolder,
         final_image_path: displayImage,
         mouse_telemetry: formattedTelemetry 
+      }, {
+        headers: {
+          'ngrok-skip-browser-warning': 'true'
+        }
       });
 
       if (currentTrialIndex + 1 < TRIAL_SEQUENCE.length) {
@@ -297,7 +298,7 @@ function App() {
 
   return (
     <div className="app-container">
-      {/* -3. ID Entry Screen (Only on first trial) */}
+      {/* -4. ID Entry Screen (Only on first trial) */}
       {phase === PHASES.ID_ENTRY && (
         <div className="centered-view" style={{ textAlign: 'center', fontFamily: 'sans-serif', color: 'white' }}>
           <h2 style={{ fontSize: '36px', marginBottom: '40px' }}>Trial Setup</h2>
@@ -345,7 +346,7 @@ function App() {
         </div>
       )}
 
-      {/* -2. Target Prompt Screen */}
+      {/* -3. Target Prompt Screen */}
       {phase === PHASES.TARGET_PROMPT && (
         <div className="centered-view" style={{ textAlign: 'center', fontFamily: 'sans-serif' }}>
           <div style={{ 
@@ -364,7 +365,7 @@ function App() {
           </div>
           <br/>
           <button 
-            onClick={() => setPhase(PHASES.FIXATION)}
+            onClick={() => setPhase(PHASES.BLANK_SCREEN)}
             style={{ 
               padding: '15px 40px', 
               fontSize: '22px', 
@@ -382,7 +383,14 @@ function App() {
         </div>
       )}
 
-      {/* -1. Fixation Screen */}
+      {/* -2. Blank Screen Phase */}
+      {phase === PHASES.BLANK_SCREEN && (
+        <div className="fixation-screen">
+          {/* Renders a completely blank black screen */}
+        </div>
+      )}
+
+      {/* -1. Fixation Screen Phase */}
       {phase === PHASES.FIXATION && (
         <div className="fixation-screen">
           <div className="fixation-cross" />

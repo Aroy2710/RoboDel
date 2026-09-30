@@ -84,6 +84,7 @@ def main():
         print(f"Saved base image: {base_path}")
 
         # 3. Extract Native 2D Bounding Boxes
+# 3. Extract Native 2D Bounding Boxes
         target_types = set(args.targets)
         
         target_objects = [
@@ -93,17 +94,25 @@ def main():
         
         bboxes_data = []
         items = []
+        type_counters = {} # Tracks how many of each object we've seen
 
         for idx, obj in enumerate(target_objects):
             obj_id = obj['objectId']
             obj_type = obj['objectType']
             
-            items.append((obj_type.lower(), obj_id))
+            # Increment the counter for this specific object type
+            type_counters[obj_type] = type_counters.get(obj_type, 0) + 1
+            
+            # Create a uniquely numbered label (e.g., vase_1, vase_2)
+            unique_lower_label = f"{obj_type.lower()}_{type_counters[obj_type]}"
+            unique_display_label = f"{obj_type}_{type_counters[obj_type]}"
+            
+            items.append((unique_lower_label, obj_id))
             
             start_x, start_y, end_x, end_y = detections2D[obj_id]
             bboxes_data.append({
                 "id": idx + 1,
-                "label": obj_type,
+                "label": unique_display_label, 
                 "x": int(start_x),
                 "y": int(start_y),
                 "width": int(end_x - start_x),
