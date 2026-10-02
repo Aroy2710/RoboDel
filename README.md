@@ -1,152 +1,33 @@
-# Installing Libraries 
-Install annaconda or annaconda mini for the virtual environment 
-### Step 1 — Python environment
+
+# RoboDel
+
+This repository contains a deployable visual perception experiment built using AI2-THOR and React. 
+
+## Part 1: Running the Application Locally 
+This section is for running the pre-configured experiment on a standard local machine. It does not require advanced headless Vulkan configurations or GPU indexing. If you wish to use the application and make your own trials please go to Part 2
+
+### Step 1 — Environment Setup
+Set up a Python virtual environment for the backend and install the Node modules for the frontend.
 
 ```bash
 cd RoboDel
+
+# 1. Setup Python Backend
 conda create -y -n robodel python=3.10
 conda activate robodel
 pip install -r requirements.txt
 
-# vulkaninfo is a binary, not a pip package; xorg-libxext is needed in step 3
-conda install -y -c conda-forge vulkan-tools xorg-libxext
+# 2. Setup React Frontend
+npm install
 
 ```
 
-### Step 2 — Unity build
+### Step 2 — Launching the Application
 
-The first run downloads AI2-THOR's Unity build (~800 MB zipped, 1.1 GB unpacked)
-into `~/.ai2thor`. Fetch it up front so the first render can't time out:
+Run the application using two separate terminals.
 
-```bash
-python -c "
-from ai2thor.controller import Controller
-from ai2thor.platform import CloudRendering
-Controller(platform=CloudRendering, download_only=True)"
-
-```
-
-It lands in `~/.ai2thor/releases/thor-CloudRendering-<commit>/`, where `<commit>`
-is the build pinned by the installed `ai2thor` (5.0.0 →
-`f0825767cd50d69f666c7f282e54abfe58f1e917`). The path is hardcoded, so to keep
-the build off your home partition, symlink `~/.ai2thor` elsewhere *before*
-downloading.
-
-Rendering uses AI2-THOR's `CloudRendering` platform — headless Vulkan, no X
-server required.
-
-### Step 3 — Graphics libraries, if the container lacks them
-
-Run `vulkaninfo --summary` first. If it lists your NVIDIA GPU under `Devices:`,
-skip to step 4. If it lists only `llvmpipe` (Mesa's CPU rasterizer) or nothing,
-read on.
-
-A GPU container image often ships CUDA and nothing else. The NVIDIA driver
-libraries get mounted in by the container runtime, but the userspace they depend
-on is absent, and the failure surfaces far from its cause:
-
-```
-RuntimeError: Could not find a Vulkan device corresponding to the CUDA device
-with UUID <uuid>.
-
-```
-
-That is AI2-THOR reporting that `vulkaninfo` showed it no NVIDIA device. CUDA
-works throughout — `nvidia-smi` and `cuInit` are fine — because only the
-*graphics* path is broken. Two libraries are usually missing, and neither needs
-root to supply:
-
-* **`libXext.so.6`**, a hard `DT_NEEDED` of `libGLX_nvidia.so.0`. Without it the
-loader cannot open the ICD at all and logs `Failed to CreateInstance in ICD`.
-* **libglvnd** (`libGL.so.1`, `libEGL.so.1`, `libGLdispatch.so.0`,
-`libGLX.so.0`, `libOpenGL.so.0`). `libGLX_nvidia.so.0` is a GLVND *vendor*
-library and refuses to initialize without the dispatch layer even when it is
-being used purely as a Vulkan ICD — `vk_icdNegotiateLoaderICDInterfaceVersion`
-returns `-3` (`VK_ERROR_INITIALIZATION_FAILED`) and every entry point comes
-back NULL. This one is easy to misdiagnose: no file access fails, and the
-driver never touches `/dev/nvidia*`, so `strace` shows nothing obviously wrong.
-
-Stage both into one directory and put it on `LD_LIBRARY_PATH`:
-
-```bash
-conda create -y -p /tmp/glvnd -c conda-forge \
-    libglvnd-cos7-x86_64 libglvnd-glx-cos7-x86_64 \
-    libglvnd-egl-cos7-x86_64 libglvnd-opengl-cos7-x86_64
-mkdir -p ~/.local/vulkanfix/lib
-cp -P /tmp/glvnd/x86_64-conda-linux-gnu/sysroot/usr/lib64/lib{GL,EGL,GLX,GLdispatch,OpenGL}.so* \
-      ~/.local/vulkanfix/lib/
-cp -P $CONDA_PREFIX/lib/libXext.so.6* ~/.local/vulkanfix/lib/   # conda install -c conda-forge xorg-libxext
-
-export LD_LIBRARY_PATH=~/.local/vulkanfix/lib
-vulkaninfo --summary        # should now list your NVIDIA device
-
-```
-
-Make it automatic so every shell inherits it, rather than exporting by hand:
-
-```bash
-mkdir -p $CONDA_PREFIX/etc/conda/{activate,deactivate}.d
-
-cat > $CONDA_PREFIX/etc/conda/activate.d/thor3d_vulkan.sh <<'EOF'
-export _THOR3D_OLD_LD_LIBRARY_PATH="${LD_LIBRARY_PATH-}"
-export LD_LIBRARY_PATH="$HOME/.local/vulkanfix/lib${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
-EOF
-
-cat > $CONDA_PREFIX/etc/conda/deactivate.d/thor3d_vulkan.sh <<'EOF'
-if [ -n "${_THOR3D_OLD_LD_LIBRARY_PATH+x}" ]; then
-    if [ -z "$_THOR3D_OLD_LD_LIBRARY_PATH" ]; then unset LD_LIBRARY_PATH
-    else export LD_LIBRARY_PATH="$_THOR3D_OLD_LD_LIBRARY_PATH"; fi
-    unset _THOR3D_OLD_LD_LIBRARY_PATH
-fi
-EOF
-
-```
-
-`activate.d` runs only at activation, so re-activate before testing:
-`conda deactivate && conda activate thor3d`.
-
-### Step 4 — GPU index
-
-Find which CUDA index has a working Vulkan device, because it is often not 0:
-
-```bash
-nvidia-smi -L                                             # CUDA index -> GPU-<uuid>
-vulkaninfo --summary | grep -E "^GPU[0-9]|deviceUUID"     # Vulkan index -> deviceUUID
-
-```
-
-Match the UUIDs. The CUDA index whose UUID appears in the `vulkaninfo` output is
-the one to pass as `--gpu`. A GPU listed by `nvidia-smi` but absent from
-`vulkaninfo` cannot render — a faulty card, or one the container exposes for
-compute only.
-
-If *every* GPU matches, AI2-THOR builds the mapping itself and there is nothing
-to do. If any GPU is unmatched it raises regardless of which index you asked for,
-because it insists on mapping all of them:
-
-```
-RuntimeError: Could not find a Vulkan device corresponding to the CUDA device
-with UUID <uuid>.
-
-```
-
-Write the map by hand to bypass that. It is the only thing AI2-THOR's
-`-force-device-index` flag is derived from:
-
-```bash
-echo '{"1": 0}' > ~/.ai2thor/cuda-vulkan-mapping.json   # CUDA 1 -> Vulkan 0
-
-```
-
-This ensures that files such as `batch_pregenerate.py` use gpu1.
-
----
-
-# How to run RoboDel (user interface)
-
-Once all the libraries and gpu mapping are completed, run the application by using two terminals.
-
-In the first terminal, this enables the save functionality in the user interface:
+**Terminal 1 (Backend Server):**
+This enables the save functionality and manages telemetry logging.
 
 ```bash
 cd RoboDel
@@ -155,17 +36,16 @@ python local_server.py
 
 ```
 
-In the second terminal, this enables the workflow of the application:
+**Terminal 2 (Frontend UI):**
+This launches the participant workflow in your browser.
 
 ```bash
 cd RoboDel
-conda activate robodel
-npm install
 npm start
 
 ```
 
-## Experimental Procedure (Participant Workflow)
+### Experimental Procedure (Participant Workflow)
 
 When the application is running, participants will progress through the following standardized trial flow:
 
@@ -177,48 +57,96 @@ When the application is running, participants will progress through the followin
 
 ---
 
-# How to generate new trials
+## Part 2: Lab Server Setup & Generating New Trials 
 
-## Using web_explorer.py
+This section is for researchers generating new combinatorial trial images directly on lab servers using AI2-THOR's headless graphics engine.
 
-If you want to add a specific part of a FloorPlan for example `FloorPlan7`, use `web_explorer.py` to navigate the scene.
+### Step 1 — Advanced Graphics Libraries (Headless Vulkan)
 
-In a new terminal run:
+If you are working on a headless GPU container, you must configure `libglvnd` and map the GPU indices properly.
+
+Run `vulkaninfo --summary` first. If it lists your NVIDIA GPU under `Devices:`, skip to Step 2. If it lists only `llvmpipe` (Mesa's CPU rasterizer) or nothing, stage the necessary libraries:
 
 ```bash
-cd RoboDel
-conda activate robodel
-python scripts/web_explorer.py FloorPlan7
+conda install -y -c conda-forge vulkan-tools xorg-libxext
+
+conda create -y -p /tmp/glvnd -c conda-forge \
+    libglvnd-cos7-x86_64 libglvnd-glx-cos7-x86_64 \
+    libglvnd-egl-cos7-x86_64 libglvnd-opengl-cos7-x86_64
+mkdir -p ~/.local/vulkanfix/lib
+cp -P /tmp/glvnd/x86_64-conda-linux-gnu/sysroot/usr/lib64/lib{GL,EGL,GLX,GLdispatch,OpenGL}.so* \
+      ~/.local/vulkanfix/lib/
+cp -P $CONDA_PREFIX/lib/libXext.so.6* ~/.local/vulkanfix/lib/
+
+export LD_LIBRARY_PATH=~/.local/vulkanfix/lib
+vulkaninfo --summary        # should now list your NVIDIA device
 
 ```
 
-The web explorer will open on port 8001. Explore the FloorPlan keeping note of the X, Y, Z, rotation, and horizon.
-
-* **X, Y, Z** denote the location of the camera.
-* **Rotation** defines rotating in increments of 90 degrees along the y-axis.
-* **Horizon** refers to the angle moved up and down by the camera.
-* `0` degrees: The camera is looking perfectly straight ahead, parallel to the floor.
-* Positive values (e.g., `30`): The camera tilts down toward the floor.
-* Negative values (e.g., `-30`): The camera tilts up toward the ceiling.
-
-
-
-For the trial, assume we find a suitable viewpoint with the following parameters:
-
-* x = -0.25
-* y = 0.901
-* z = 0.25
-* Rotation = 270
-* Horizon = 0
-
-## Using batch_pregenerate.py
-We will use these coordinates to generate variants of this image that exclude some of the objects visible in the image.
-
-To first find what objects we are dealing with, we will pass these parameters to `batch_pregenerate.py`. In a new terminal run the following:
+Make it automatic so every shell inherits it:
 
 ```bash
-cd RoboDel
-conda activate robodel
+mkdir -p $CONDA_PREFIX/etc/conda/{activate,deactivate}.d
+
+cat > $CONDA_PREFIX/etc/conda/activate.d/thor3d_vulkan.sh <<'INNER_EOF'
+export _THOR3D_OLD_LD_LIBRARY_PATH="${LD_LIBRARY_PATH-}"
+export LD_LIBRARY_PATH="$HOME/.local/vulkanfix/lib${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
+INNER_EOF
+
+cat > $CONDA_PREFIX/etc/conda/deactivate.d/thor3d_vulkan.sh <<'INNER_EOF'
+if [ -n "${_THOR3D_OLD_LD_LIBRARY_PATH+x}" ]; then
+    if [ -z "$_THOR3D_OLD_LD_LIBRARY_PATH" ]; then unset LD_LIBRARY_PATH
+    else export LD_LIBRARY_PATH="$_THOR3D_OLD_LD_LIBRARY_PATH"; fi
+    unset _THOR3D_OLD_LD_LIBRARY_PATH
+fi
+INNER_EOF
+
+```
+
+Re-activate the environment: `conda deactivate && conda activate robodel`.
+
+### Step 2 — Unity Build & GPU Indexing
+
+The first run downloads AI2-THOR's Unity build (~1.1 GB unpacked). Run this manually to prevent timeouts:
+
+```bash
+python -c "
+from ai2thor.controller import Controller
+from ai2thor.platform import CloudRendering
+Controller(platform=CloudRendering, download_only=True)"
+
+```
+
+Next, map the correct CUDA index to the Vulkan device:
+
+```bash
+nvidia-smi -L                                             # CUDA index -> GPU-<uuid>
+vulkaninfo --summary | grep -E "^GPU[0-9]|deviceUUID"     # Vulkan index -> deviceUUID
+
+```
+
+If the indexes do not match, write a manual mapping file to force AI2-THOR to use the correct GPU (e.g., mapping CUDA 1 to Vulkan 0):
+
+```bash
+echo '{"1": 0}' > ~/.ai2thor/cuda-vulkan-mapping.json
+
+```
+
+### Step 3 — Probing a Scene with web_explorer.py
+
+Use `web_explorer.py` to navigate a scene (e.g., `FloorPlan7`) and find optimal camera coordinates.
+
+```bash
+python scripts/web_explorer.py FloorPlan7
+
+```
+The scene should look something like this 
+![alt text](image.png)
+Open port 8001 in your browser. Note the X, Y, Z, Rotation, and Horizon parameters of your desired viewpoint. Navigate around the scene to get your desired coordinates.
+
+Probe the scene to see what objects AI2-THOR can detect at those coordinates by appending the `--list-objects` flag:
+
+```bash
 python scripts/batch_pregenerate.py \
   --scene FloorPlan7 \
   --x -0.25 \
@@ -229,10 +157,9 @@ python scripts/batch_pregenerate.py \
   --list-objects
 
 ```
-
 You should get the following output:
 
-```text
+```
 Probing FloorPlan7 for visible objects...
 
 === VISIBLE OBJECTS FOUND ===
@@ -254,14 +181,10 @@ Probing FloorPlan7 for visible objects...
  - Window
 =============================
 Exiting probe mode. No files were generated.
-
 ```
+### Step 4 — Batch Generating Combinatorial Images
 
-For this example we are going to choose Book, Bowl, Bread, Chair, Cup, Egg, and HousePlant as the objects. There are 7 objects in total, so there will be 2^7 combinations to generate.
-
-*Note: Sometimes these environments have multiple objects with the same name like Vase. In that case, there can be more than 2^7 combinations. When `batch_pregenerate.py` is running, it will display the exact number of objects its working with.*
-
-With these objects in mind, run the following command in the same terminal:
+Once you have selected your target objects (e.g., Book, Bowl, Bread, Chair, Cup, Egg, HousePlant), run the generation script. Note that duplicate items (e.g., 3 chairs) will be automatically indexed as unique entities (e.g., `chair_1`, `chair_2`).
 
 ```bash
 python scripts/batch_pregenerate.py \
@@ -275,12 +198,9 @@ python scripts/batch_pregenerate.py \
   --targets Book Bowl Bread Chair Cup Egg HousePlant
 
 ```
+Here is a snippet of the output
 
-The pregenerated variants will be stored in `public/Prerendered_Scenes` inside the folder `Trial_x_FP7_Counter`. Every time `batch_pregenerate.py` is run to generate images, the previous output in that target directory is cleared to avoid cluttering and to save time.
-
-Here is a snippet of the output:
-
-```text
+```
 Clearing existing contents in /data/roy/RoboDel/public/Prerendered_Scenes/Trial_x_FP7_Counter...
 Initializing FloorPlan7 -> Saving to /data/roy/RoboDel/public/Prerendered_Scenes/Trial_x_FP7_Counter
 Saved base image: /data/roy/RoboDel/public/Prerendered_Scenes/Trial_x_FP7_Counter/base.jpg
@@ -288,14 +208,13 @@ Target items detected (9): ['book_1', 'bowl_1', 'bread_1', 'chair_1', 'chair_2',
 Saved native bounding boxes to: /data/roy/RoboDel/public/Prerendered_Scenes/Trial_x_FP7_Counter/bounding_boxes.json
 -> Generated removed_book_1.jpg
 -> Generated removed_bowl_1.jpg
-
 ```
 
-Here there were multiple objects that shared the same name (like 3 chairs), hence there are actually 9 objects to consider, giving us 2^9 combinations.
+The variants and their associated `bounding_boxes.json` will be saved to `public/Prerendered_Scenes/Trial_x_FP7_Counter`.
 
-## Updating the React Application
+### Step 5 — Updating the React Application
 
-To ensure the user interface includes this new trial, add `"Trial_x_FP7_Counter"` to `TRIAL_SEQUENCE` and a corresponding target object (e.g., `"Egg"`) to the `TARGET_SEQUENCE` in `src/App.js`.
+To make the new trial accessible in the UI, update the state arrays in `src/App.js`.
 
 **Both arrays must be updated identically to prevent the application from crashing:**
 
@@ -314,5 +233,5 @@ const TARGET_SEQUENCE = [
 
 ```
 
-The trials are shown sequentially in the user interface, so `Trial_x_FP7_Counter` will be shown as the 3rd and last trial. 
+The application will sequence the trials in the exact order specified above. Ensure `local_server.py` is actively running to capture the resulting session data.
 
