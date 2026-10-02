@@ -1,0 +1,83 @@
+[
+    {
+        "id": 1,
+        "label": "Book_1",
+        "x": 139,
+        "y": 393,
+        "width": 79,
+        "height": 15,
+        "isClicked": false
+    },
+    {
+        "id": 2,
+        "label": "Bowl_1",
+        "x": 532,
+        "y": 373,
+        "width": 36,
+        "height": 26,
+        "isClicked": false
+    },
+    {
+        "id": 3,
+        "label": "Bread_1",
+        "x": 241,
+        "y": 396,
+        "width": 71,
+        "height": 47,
+        "isClicked": false
+    },
+    {
+        "id": 4,
+        "label": "Chair_1",
+        "x": 711,
+        "y": 342,
+        "width": 75,
+        "height": 130,
+        "isClicked": false
+    },
+    {
+        "id": 5,
+        "label": "Chair_2",
+        "x": 1001,
+        "y": 467,
+        "width": 22,
+        "height": 24,
+        "isClicked": false
+    },
+    {
+        "id": 6,
+        "label": "Chair_3",
+        "x": 747,
+        "y": 332,
+        "width": 65,
+        "height": 105,
+        "isClicked": false
+    },
+    {
+        "id": 7,
+        "label": "Cup_1",
+        "x": 455,
+        "y": 379,
+        "width": 17,
+        "height": 27,
+        "isClicked": false
+    },
+    {
+        "id": 8,
+        "label": "Egg_1",
+        "x": 357,
+        "y": 420,
+        "width": 13,
+        "height": 11,
+        "isClicked": false
+    },
+    {
+        "id": 9,
+        "label": "HousePlant_1",
+        "x": 829,
+        "y": 314,
+        "width": 71,
+        "height": 64,
+        "isClicked": false
+    }
+]

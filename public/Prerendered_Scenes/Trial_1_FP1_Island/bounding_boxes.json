@@ -1,0 +1,74 @@
+[
+    {
+        "id": 1,
+        "label": "Apple",
+        "x": 316,
+        "y": 421,
+        "width": 40,
+        "height": 44,
+        "isClicked": false
+    },
+    {
+        "id": 2,
+        "label": "Book",
+        "x": 336,
+        "y": 359,
+        "width": 101,
+        "height": 47,
+        "isClicked": false
+    },
+    {
+        "id": 3,
+        "label": "Bottle",
+        "x": 767,
+        "y": 333,
+        "width": 14,
+        "height": 26,
+        "isClicked": false
+    },
+    {
+        "id": 4,
+        "label": "Bowl",
+        "x": 635,
+        "y": 357,
+        "width": 39,
+        "height": 23,
+        "isClicked": false
+    },
+    {
+        "id": 5,
+        "label": "Bread",
+        "x": 467,
+        "y": 415,
+        "width": 112,
+        "height": 72,
+        "isClicked": false
+    },
+    {
+        "id": 6,
+        "label": "Kettle",
+        "x": 820,
+        "y": 350,
+        "width": 38,
+        "height": 25,
+        "isClicked": false
+    },
+    {
+        "id": 7,
+        "label": "Pan",
+        "x": 840,
+        "y": 376,
+        "width": 66,
+        "height": 15,
+        "isClicked": false
+    },
+    {
+        "id": 8,
+        "label": "Tomato",
+        "x": 758,
+        "y": 418,
+        "width": 49,
+        "height": 34,
+        "isClicked": false
+    }
+]

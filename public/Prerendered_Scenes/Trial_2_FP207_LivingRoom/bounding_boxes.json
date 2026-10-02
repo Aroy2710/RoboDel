@@ -1,0 +1,92 @@
+[
+    {
+        "id": 1,
+        "label": "ArmChair_1",
+        "x": 799,
+        "y": 351,
+        "width": 224,
+        "height": 224,
+        "isClicked": false
+    },
+    {
+        "id": 2,
+        "label": "ArmChair_2",
+        "x": 695,
+        "y": 257,
+        "width": 253,
+        "height": 135,
+        "isClicked": false
+    },
+    {
+        "id": 3,
+        "label": "Box_1",
+        "x": 597,
+        "y": 323,
+        "width": 95,
+        "height": 73,
+        "isClicked": false
+    },
+    {
+        "id": 4,
+        "label": "HousePlant_1",
+        "x": 664,
+        "y": 151,
+        "width": 55,
+        "height": 95,
+        "isClicked": false
+    },
+    {
+        "id": 5,
+        "label": "Laptop_1",
+        "x": 506,
+        "y": 294,
+        "width": 71,
+        "height": 82,
+        "isClicked": false
+    },
+    {
+        "id": 6,
+        "label": "Painting_1",
+        "x": 464,
+        "y": 62,
+        "width": 142,
+        "height": 109,
+        "isClicked": false
+    },
+    {
+        "id": 7,
+        "label": "Pillow_1",
+        "x": 448,
+        "y": 256,
+        "width": 63,
+        "height": 31,
+        "isClicked": false
+    },
+    {
+        "id": 8,
+        "label": "Vase_1",
+        "x": 245,
+        "y": 87,
+        "width": 29,
+        "height": 28,
+        "isClicked": false
+    },
+    {
+        "id": 9,
+        "label": "Vase_2",
+        "x": 260,
+        "y": 124,
+        "width": 29,
+        "height": 31,
+        "isClicked": false
+    },
+    {
+        "id": 10,
+        "label": "Vase_3",
+        "x": 303,
+        "y": 131,
+        "width": 22,
+        "height": 24,
+        "isClicked": false
+    }
+]

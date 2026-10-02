@@ -43,7 +43,10 @@ sam_vit_b_01ec64.pth
 sam_vit_b_01ec64.pth
 
 # Ignore all pre-rendered trials and images
-public/Prerendered_Scenes/*
 
-# Keep the placeholder file so Git tracks the directory
-!public/Prerendered_Scenes/.gitkeep
+# Ignore contents of Output folders, but allow the .gitkeep files
+/output/Output_Images/*
+!/output/Output_Images/.gitkeep
+
+/output/Output_JSON/*
+!/output/Output_JSON/.gitkeep
