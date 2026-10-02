@@ -17,12 +17,14 @@ const PHASES = {
 // Sequences map 1:1. Trial index 0 gets Target index 0.
 const TRIAL_SEQUENCE = [
   "Trial_1_FP1_Island",
-  "Trial_2_FP207_LivingRoom"
+  "Trial_2_FP207_LivingRoom",
+  "Trial_x_FP7_Counter"
 ];
 
 const TARGET_SEQUENCE = [
   "Pan",
-  "Bottle"
+  "Bottle",
+  "Plant"
 ];
 
 function App() {

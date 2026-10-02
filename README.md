@@ -2,7 +2,7 @@
 .
 
 ### Step 1 — Python environment
-
+Install annaconda or annaconda mini for the virtual environment 
 ```bash
 cd RoboDel
 conda create -y -n robodel python=3.10
@@ -131,11 +131,170 @@ Write the map by hand to bypass that. It is the only thing AI2-THOR's
 echo '{"1": 0}' > ~/.ai2thor/cuda-vulkan-mapping.json   # CUDA 1 -> Vulkan 0
 ```
 
-Then pass `--gpu 1` — the CUDA index, the key on the left — to every script and
-to the web app. An index missing from the map fails immediately with
-`KeyError: <index>`, which is the good case; the bad case is a map pointing at a
-CPU device, which renders silently and slowly (see the CPU section below).
+This ensures that files such as batch_pregenerate.py use gpu1 
+# How to run RoboDel (user interface)
+Once all the libraries and gpu mapping are completed 
+Run the application by using two terminals .
 
-This file is a cache AI2-THOR never revalidates, so rewrite it whenever the set
-of visible GPUs changes.
-.
+In the first terminal , this enables the save functionality in the user interface
+
+```
+cd RoboDel
+conda activate robodel
+python local_server.py 
+```
+
+In the second terminal. This enables the workflow of the application.
+
+```
+cd RoboDel
+conda activate robodel
+npm install
+npm start
+```
+# How to generate new trials
+
+## Using web_explorer.py
+If you want to add a specific part of a FloorPlan for example FloorPlan7. Use web_explorer.py to navigate the scene 
+In a new terminal run:
+ ```
+ cd RoboDel
+ conda activate robodel
+ python scripts/web_explorer.py FloorPlan7
+ ```
+The web explorer will open on port 8001  and it should look like this for FloorPlan7
+
+![alt text](image.png)
+
+Explore the FloorPlan keeping note of the X,Y,Z , rotation and horizon
+
+- X,Y,Z denote the location of the camera
+- Rotation defines rotating in increment of 90 degree along the y axis 
+- Horizon refers to the angle moved up and down by the camera . 
+    - 0 degrees: The camera is looking perfectly straight ahead, parallel to the floor.
+
+    - Positive values (e.g., 30): The camera tilts down toward the floor.
+
+    - Negative values (e.g., -30): The camera tilts up toward the ceiling
+
+
+For the trial we will use this part of the FloorPlan
+![alt text](image-1.png)
+This part has the following parameters:
+- x = -0.25
+- y = 0.901
+- z = 0.25
+- Rotation = 270
+- Horizon = 0
+
+We will use these coordinates to generate variants of this image that exclude some of the objects visible in the image.
+
+To first find what objects we are dealing with, we will pass these parameters to batch_pregenerate.py
+
+In a new terminal run the following 
+
+```
+cd RoboDel
+conda activate robodel
+python scripts/batch_pregenerate.py \
+  --scene FloorPlan7 \
+  --x -0.25 \
+  --y 0.901 \
+  --z 0.25 \
+  --rotY 270 \
+  --horizon 0 \
+  --list-objects
+```
+
+You should get the following output:
+
+```
+Probing FloorPlan7 for visible objects...
+
+=== VISIBLE OBJECTS FOUND ===
+ - Book
+ - Bowl
+ - Bread
+ - Cabinet
+ - Chair
+ - CoffeeMachine
+ - CounterTop
+ - Cup
+ - DiningTable
+ - Drawer
+ - Egg
+ - Floor
+ - HousePlant
+ - Lettuce
+ - Pot
+ - Window
+=============================
+Exiting probe mode. No files were generated.
+```
+
+For this example we are going to choose Book , Bowl , Bread, Chair , Cup , Egg , HousePlant as the objects
+
+There 7 objects in total , so there will be 2^7 combinations to generate.
+
+Note : Sometimes these environments have multiple objects with the same name like Vase. In that case there can be more than 2^7 combinations. When batch_pregenerate.py is running it will display the exact number of objects its working with.
+
+With these objects in mind we will run the following command in the same terminal
+```
+python scripts/batch_pregenerate.py \
+  --scene FloorPlan7 \
+  --trial Trial_x_FP7_Counter \
+  --x -0.25 \
+  --y 0.901 \
+  --z 0.25 \
+  --rotY 270 \
+  --horizon 0 \
+  --targets Book Bowl Bread Chair Cup Egg HousePlant
+```
+
+The pregenerated variants will stored in public/Prerendered_Scenes inside the folder Trial_x_FP7_Counter.
+
+Here is a snippet of the output
+
+```
+Clearing existing contents in /data/roy/RoboDel/public/Prerendered_Scenes/Trial_x_FP7_Counter...
+Initializing FloorPlan7 -> Saving to /data/roy/RoboDel/public/Prerendered_Scenes/Trial_x_FP7_Counter
+Saved base image: /data/roy/RoboDel/public/Prerendered_Scenes/Trial_x_FP7_Counter/base.jpg
+Target items detected (9): ['book_1', 'bowl_1', 'bread_1', 'chair_1', 'chair_2', 'chair_3', 'cup_1', 'egg_1', 'houseplant_1']
+Saved native bounding boxes to: /data/roy/RoboDel/public/Prerendered_Scenes/Trial_x_FP7_Counter/bounding_boxes.json
+-> Generated removed_book_1.jpg
+-> Generated removed_bowl_1.jpg
+```
+Here there were multiple object that shared the same name like there being 3 chairs, hence there are actually 9 objects to consider giving us 2^9 combinations. 
+
+Everytime batch_pregenerate is ran to generate the images , the previous output is cleared to avoid cluttering and to save time.
+
+To ensure the user interface includes this new trial add
+"Trial_x_FP7_Counter" to TRIAL_SEQUENCE in src/App.js
+
+```
+const TRIAL_SEQUENCE = [
+  "Trial_1_FP1_Island",
+  "Trial_2_FP207_LivingRoom",
+  "Trial_x_FP7_Counter"
+];
+```
+The trials are shown sequentially in the user interface so Trial_x_FP7_Counter will be shown as the 3rd and last trial.
+
+Once this is done, run the application using two seperate terminals
+
+In the first terminal , this enables the save functionality in the user interface
+
+```
+cd RoboDel
+conda activate robodel
+python local_server.py 
+```
+
+In the second terminal. This enables the workflow of the application.
+
+```
+cd RoboDel
+conda activate robodel
+npm install
+npm start
+```
