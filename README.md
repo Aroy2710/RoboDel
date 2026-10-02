@@ -211,6 +211,7 @@ For the trial, assume we find a suitable viewpoint with the following parameters
 * Rotation = 270
 * Horizon = 0
 
+## Using batch_pregenerate.py
 We will use these coordinates to generate variants of this image that exclude some of the objects visible in the image.
 
 To first find what objects we are dealing with, we will pass these parameters to `batch_pregenerate.py`. In a new terminal run the following:
