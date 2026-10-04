@@ -179,15 +179,16 @@ function App() {
         });
       };
 
-      const handleKeyDown = (e) => {
-        if (e.key === 'Enter') {
+      // Changed from handleKeyDown to handleMouseDown
+      const handleMouseDown = (e) => {
+        if (e.button === 0) { // e.button === 0 ensures it specifically responds to a left-click
           setPhase(PHASES.TRANSITION);
           setTimeout(() => setPhase(PHASES.INTERACTIVE), 500);
         }
       };
 
       canvas.addEventListener('mousemove', handleMouseMove);
-      window.addEventListener('keydown', handleKeyDown);
+      window.addEventListener('mousedown', handleMouseDown); // Changed 'keydown' to 'mousedown'
       
       const telemetryIntervalId = setInterval(() => {
         const { x, y } = currentMouseRef.current;
@@ -198,7 +199,7 @@ function App() {
 
       return () => {
         canvas.removeEventListener('mousemove', handleMouseMove);
-        window.removeEventListener('keydown', handleKeyDown);
+        window.removeEventListener('mousedown', handleMouseDown); // Changed 'keydown' to 'mousedown'
         clearInterval(telemetryIntervalId);
         if (renderFrameRef.current) cancelAnimationFrame(renderFrameRef.current);
       };
