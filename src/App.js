@@ -4,17 +4,16 @@ import './App.css';
 
 const API_URL = "http://localhost:8000";
 const PHASES = {
-  ID_ENTRY: -4,      // Phase 1: Ask for Participant ID (only on first trial)
-  TARGET_PROMPT: -3, // Phase 2: Show the target object to find
-  BLANK_SCREEN: -2,  // Phase 3: 500ms pure black screen
-  FIXATION: -1,      // Phase 4: 500ms red cross
+  ID_ENTRY: -4,
+  TARGET_PROMPT: -3,
+  BLANK_SCREEN: -2,
+  FIXATION: -1,
   OBSERVATION: 0,
   TRANSITION: 1,
   INTERACTIVE: 2,
   COMPLETED: 3
 };
 
-// Sequences map 1:1. Trial index 0 gets Target index 0.
 const TRIAL_SEQUENCE = [
   "Trial_1_FP1_Island",
   "Trial_2_FP207_LivingRoom",
@@ -32,33 +31,22 @@ function App() {
   const activeFolder = TRIAL_SEQUENCE[currentTrialIndex] || TRIAL_SEQUENCE[0];
   const activeTarget = TARGET_SEQUENCE[currentTrialIndex] || TARGET_SEQUENCE[0];
 
-  // Dynamic paths based on active trial folder
   const modifiedImage = `/Prerendered_Scenes/${activeFolder}/base.jpg`;
-  const originalImage = modifiedImage;
 
-  // New state for Participant ID
   const [participantId, setParticipantId] = useState("");
-  
-  // Start the application in the ID_ENTRY phase
   const [phase, setPhase] = useState(PHASES.ID_ENTRY);
   const [isProcessing, setIsProcessing] = useState(false);
 
   const [displayImage, setDisplayImage] = useState(modifiedImage);
   const workingImageRef = useRef(null);
   
-  // Canvas, Telemetry, and Testing Refs
   const canvasRef = useRef(null);
-  const blurredCanvasRef = useRef(document.createElement('canvas'));
   const telemetryRef = useRef([]);
   const renderFrameRef = useRef();
   const currentMouseRef = useRef({ x: 0, y: 0 });
-  
-  const [numStops, setNumStops] = useState(100); 
-  const numStopsRef = useRef(100);
 
-  useEffect(() => {
-    numStopsRef.current = numStops;
-  }, [numStops]);
+  const pyramidRefs = useRef([]); 
+  const saliconLUTRef = useRef(null);
 
   const [removedObjects, setRemovedObjects] = useState([]);
   const [removedLabels, setRemovedLabels] = useState([]);
@@ -69,10 +57,7 @@ function App() {
     setDisplayImage(modifiedImage);
     setRemovedObjects([]);
     setRemovedLabels([]);
-    
-    // If it's the first trial, ask for ID. Otherwise, skip straight to the Target Prompt.
     setPhase(currentTrialIndex === 0 ? PHASES.ID_ENTRY : PHASES.TARGET_PROMPT); 
-    
     telemetryRef.current = []; 
     currentMouseRef.current = { x: 0, y: 0 }; 
 
@@ -81,22 +66,90 @@ function App() {
     ref.onload = () => {
       setNaturalDims({ width: ref.naturalWidth, height: ref.naturalHeight });
       workingImageRef.current = ref;
+      
+      const TARGET_W = ref.naturalWidth;
+      const TARGET_H = ref.naturalHeight;
+
+      // 1. Draw base image exactly at its native resolution (e.g., 1024x576)
+      const c0 = document.createElement('canvas');
+      c0.width = TARGET_W;
+      c0.height = TARGET_H;
+      const ctx0 = c0.getContext('2d');
+      ctx0.drawImage(ref, 0, 0, TARGET_W, TARGET_H);
+      
+      // 2. Build the iterative downsampled Gaussian pyramid
+      const levels = [c0];
+      for (let i = 1; i < 6; i++) {
+        const prev = levels[i - 1];
+        const c = document.createElement('canvas');
+        c.width = Math.max(1, Math.floor(prev.width / 2));
+        c.height = Math.max(1, Math.floor(prev.height / 2));
+        const cCtx = c.getContext('2d');
+        cCtx.imageSmoothingEnabled = true;
+        cCtx.imageSmoothingQuality = 'high';
+        cCtx.drawImage(prev, 0, 0, c.width, c.height);
+        levels.push(c);
+      }
+
+      // 3. Interpolate all levels back up with proportional Gaussian blur
+      const pyramid = [];
+      const tempCanvas = document.createElement('canvas');
+      tempCanvas.width = TARGET_W;
+      tempCanvas.height = TARGET_H;
+      const tempCtx = tempCanvas.getContext('2d', { willReadFrequently: true });
+      
+      for (let i = 0; i < 6; i++) {
+        tempCtx.clearRect(0, 0, TARGET_W, TARGET_H);
+        tempCtx.imageSmoothingEnabled = true;
+        tempCtx.imageSmoothingQuality = 'high';
+        
+        if (i > 0) {
+          tempCtx.filter = `blur(${Math.pow(2, i - 1)}px)`;
+        } else {
+          tempCtx.filter = 'none';
+        }
+        
+        tempCtx.drawImage(levels[i], 0, 0, levels[i].width, levels[i].height, 0, 0, TARGET_W, TARGET_H);
+        
+        const imgData = tempCtx.getImageData(0, 0, TARGET_W, TARGET_H);
+        pyramid.push(new Uint32Array(imgData.data.buffer));
+      }
+      
+      pyramidRefs.current = pyramid;
+
+      // 4. PRE-COMPUTE THE SALICON BLENDING LOOKUP TABLE (LUT)
+      // Proportionally scale the physical 1080p p-value down to the native image width
+      const p = 29.719 * (TARGET_W / 1920); 
+      const alpha = 2.5; 
+      const maxDistSq = (TARGET_W * TARGET_W) + (TARGET_H * TARGET_H);
+      const lut = new Float32Array(maxDistSq * 2);
+
+      for (let dSq = 0; dSq < maxDistSq; dSq++) {
+        const d = Math.sqrt(dSq); 
+        const theta = d / p;
+        const R = alpha / (alpha + theta); 
+
+        let L = (1.0 - R) * 5.0;
+        L = Math.max(0, Math.min(5, L));
+
+        const layerA = Math.floor(L);
+        lut[dSq * 2] = layerA;            
+        lut[dSq * 2 + 1] = L - layerA;    
+      }
+      
+      saliconLUTRef.current = lut;
     };
     ref.src = modifiedImage;
   }, [currentTrialIndex, modifiedImage]);
 
   useEffect(() => {
     if (currentTrialIndex >= TRIAL_SEQUENCE.length) return;
-
     fetch(`/Prerendered_Scenes/${activeFolder}/bounding_boxes.json`)
       .then(response => response.json())
-      .then(data => {
-        setBoundingBoxes(data);
-      })
+      .then(data => setBoundingBoxes(data))
       .catch(error => console.error(`Failed to load bounding boxes for ${activeFolder}:`, error));
   }, [activeFolder, currentTrialIndex]);
 
-  // Handle the sequence: 500ms Blank Screen -> 500ms Fixation Cross -> Observation
   useEffect(() => {
     let timerId;
     if (phase === PHASES.BLANK_SCREEN) {
@@ -108,87 +161,89 @@ function App() {
   }, [phase]);
 
   useEffect(() => {
-    if (phase === PHASES.OBSERVATION && naturalDims && workingImageRef.current) {
+    if (phase === PHASES.OBSERVATION && naturalDims && workingImageRef.current && pyramidRefs.current.length === 6) {
       const canvas = canvasRef.current;
       if (!canvas) return;
       
+      // Lock internal loop exactly to native image resolution (e.g., 1024x576)
+      canvas.width = naturalDims.width;
+      canvas.height = naturalDims.height;
       const ctx = canvas.getContext('2d');
-      const img = workingImageRef.current;
 
-      canvas.width = img.naturalWidth;
-      canvas.height = img.naturalHeight;
-
-      const bCanvas = blurredCanvasRef.current;
-      bCanvas.width = img.naturalWidth;
-      bCanvas.height = img.naturalHeight;
-      const bCtx = bCanvas.getContext('2d');
-      bCtx.filter = 'blur(15px)'; 
-      bCtx.drawImage(img, 0, 0);
-
-      const P_PX_PER_DEG = 29.719; 
-      const ALPHA_DEG = 2.5;       
-      const CURSOR_DEG = 2.0;      
-
-      const alpha_px = P_PX_PER_DEG * ALPHA_DEG;          
-      const cursor_radius_px = P_PX_PER_DEG * CURSOR_DEG; 
-
-      const MAX_BLEND_RADIUS = Math.max(canvas.width, canvas.height); 
+      const p = 29.719 * (canvas.width / 1920); 
 
       const handleMouseMove = (e) => {
         const rect = canvas.getBoundingClientRect();
+        
+        // Translates screen coordinate to internal array coordinate accurately
         const scaleX = canvas.width / rect.width;
         const scaleY = canvas.height / rect.height;
-        const x = (e.clientX - rect.left) * scaleX;
-        const y = (e.clientY - rect.top) * scaleY;
+        const mx = Math.round((e.clientX - rect.left) * scaleX);
+        const my = Math.round((e.clientY - rect.top) * scaleY);
 
-        currentMouseRef.current = { x, y };
+        currentMouseRef.current = { x: mx, y: my };
 
         if (renderFrameRef.current) cancelAnimationFrame(renderFrameRef.current);
+        
         renderFrameRef.current = requestAnimationFrame(() => {
-          ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-          ctx.globalCompositeOperation = 'source-over';
-          ctx.drawImage(bCanvas, 0, 0);
-
-          ctx.globalCompositeOperation = 'destination-out';
-          const gradient = ctx.createRadialGradient(x, y, 0, x, y, MAX_BLEND_RADIUS);
+          const w = canvas.width;
+          const h = canvas.height;
+          const maxDistSq = (w * w) + (h * h);
           
-          const currentStops = numStopsRef.current; 
-          for (let i = 0; i <= currentStops; i++) {
-              const fraction = Math.pow(i / currentStops, 2); 
-              const r = fraction * MAX_BLEND_RADIUS;
-              
-              const R_val = alpha_px / (alpha_px + r); 
-              gradient.addColorStop(fraction, `rgba(0, 0, 0, ${R_val})`);
+          const outData = new Uint8ClampedArray(w * h * 4);
+          const out32 = new Uint32Array(outData.buffer);
+          
+          const lut = saliconLUTRef.current;
+          const pyra = pyramidRefs.current;
+
+          let i = 0;
+          for (let py = 0; py < h; py++) {
+            const dy = py - my;
+            const dySq = dy * dy; 
+            
+            for (let px = 0; px < w; px++) {
+              const dx = px - mx;
+              let distSq = (dx * dx) + dySq;
+              if (distSq >= maxDistSq) distSq = maxDistSq - 1;
+
+              const lutIdx = distSq << 1; 
+              const layerA = lut[lutIdx];
+              const weightB = lut[lutIdx + 1];
+              const weightA = 1.0 - weightB;
+
+              const layerB = layerA < 5 ? layerA + 1 : 5;
+
+              const colorA = pyra[layerA][i];
+              const colorB = pyra[layerB][i];
+
+              const r = (colorA & 0xff) * weightA + (colorB & 0xff) * weightB;
+              const g = ((colorA >> 8) & 0xff) * weightA + ((colorB >> 8) & 0xff) * weightB;
+              const b = ((colorA >> 16) & 0xff) * weightA + ((colorB >> 16) & 0xff) * weightB;
+
+              out32[i] = (0xff000000) | (b << 16) | (g << 8) | r;
+              i++;
+            }
           }
 
-          ctx.fillStyle = gradient;
-          ctx.beginPath();
-          ctx.rect(0, 0, canvas.width, canvas.height);
-          ctx.fill();
+          ctx.putImageData(new ImageData(outData, w, h), 0, 0);
 
-          ctx.globalCompositeOperation = 'destination-over';
-          ctx.drawImage(img, 0, 0);
-
-          ctx.globalCompositeOperation = 'source-over';
           ctx.strokeStyle = 'rgba(255, 0, 0, 0.65)';
-          ctx.lineWidth = 2 * scaleX; 
+          ctx.lineWidth = 2 * scaleX; // Scales line width so it doesn't look overly thick after CSS stretch
           ctx.beginPath();
-          ctx.arc(x, y, cursor_radius_px, 0, 2 * Math.PI);
+          ctx.arc(mx, my, p * 2.0, 0, 2 * Math.PI); 
           ctx.stroke();
         });
       };
 
-      // Changed from handleKeyDown to handleMouseDown
       const handleMouseDown = (e) => {
-        if (e.button === 0) { // e.button === 0 ensures it specifically responds to a left-click
+        if (e.button === 0) { 
           setPhase(PHASES.TRANSITION);
           setTimeout(() => setPhase(PHASES.INTERACTIVE), 500);
         }
       };
 
       canvas.addEventListener('mousemove', handleMouseMove);
-      window.addEventListener('mousedown', handleMouseDown); // Changed 'keydown' to 'mousedown'
+      window.addEventListener('mousedown', handleMouseDown);
       
       const telemetryIntervalId = setInterval(() => {
         const { x, y } = currentMouseRef.current;
@@ -197,9 +252,11 @@ function App() {
         }
       }, 300);
 
+      handleMouseMove({ clientX: -999, clientY: -999 });
+
       return () => {
         canvas.removeEventListener('mousemove', handleMouseMove);
-        window.removeEventListener('mousedown', handleMouseDown); // Changed 'keydown' to 'mousedown'
+        window.removeEventListener('mousedown', handleMouseDown); 
         clearInterval(telemetryIntervalId);
         if (renderFrameRef.current) cancelAnimationFrame(renderFrameRef.current);
       };
@@ -301,7 +358,6 @@ function App() {
 
   return (
     <div className="app-container">
-      {/* -4. ID Entry Screen (Only on first trial) */}
       {phase === PHASES.ID_ENTRY && (
         <div className="centered-view" style={{ textAlign: 'center', fontFamily: 'sans-serif', color: 'white' }}>
           <h2 style={{ fontSize: '36px', marginBottom: '40px' }}>Trial Setup</h2>
@@ -314,121 +370,64 @@ function App() {
               value={participantId} 
               onChange={(e) => setParticipantId(e.target.value)} 
               placeholder="Enter ID..."
-              style={{ 
-                padding: '12px 18px', 
-                fontSize: '20px', 
-                borderRadius: '6px', 
-                border: 'none',
-                outline: 'none',
-                color: 'black'
-              }}
+              style={{ padding: '12px 18px', fontSize: '20px', borderRadius: '6px', border: 'none', outline: 'none', color: 'black' }}
             />
           </div>
           <button 
             onClick={() => {
-              if (!participantId.trim()) {
-                alert("Please enter a Participant ID to continue.");
-                return;
-              }
+              if (!participantId.trim()) { alert("Please enter a Participant ID to continue."); return; }
               setPhase(PHASES.TARGET_PROMPT);
             }}
-            style={{ 
-              padding: '12px 30px', 
-              fontSize: '20px', 
-              backgroundColor: '#3b82f6', 
-              color: 'white', 
-              border: 'none', 
-              borderRadius: '6px',
-              cursor: 'pointer',
-              fontWeight: 'bold',
-              marginTop: '20px'
-            }}
+            style={{ padding: '12px 30px', fontSize: '20px', backgroundColor: '#3b82f6', color: 'white', border: 'none', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold', marginTop: '20px' }}
           >
             Next
           </button>
         </div>
       )}
 
-      {/* -3. Target Prompt Screen */}
       {phase === PHASES.TARGET_PROMPT && (
         <div className="centered-view" style={{ textAlign: 'center', fontFamily: 'sans-serif' }}>
-          <div style={{ 
-            margin: '0 auto 40px auto', 
-            fontSize: '28px', 
-            backgroundColor: '#f3f4f6', 
-            padding: '40px 60px', 
-            borderRadius: '12px',
-            color: '#374151',
-            display: 'inline-block'
-          }}>
+          <div style={{ margin: '0 auto 40px auto', fontSize: '28px', backgroundColor: '#f3f4f6', padding: '40px 60px', borderRadius: '12px', color: '#374151', display: 'inline-block' }}>
             Your target to find is: <br />
-            <strong style={{ fontSize: '64px', color: '#3b82f6', display: 'block', marginTop: '20px' }}>
-              {activeTarget}
-            </strong>
+            <strong style={{ fontSize: '64px', color: '#3b82f6', display: 'block', marginTop: '20px' }}>{activeTarget}</strong>
           </div>
           <br/>
           <button 
             onClick={() => setPhase(PHASES.BLANK_SCREEN)}
-            style={{ 
-              padding: '15px 40px', 
-              fontSize: '22px', 
-              backgroundColor: '#22c55e', 
-              color: 'white', 
-              border: 'none', 
-              borderRadius: '8px',
-              cursor: 'pointer',
-              fontWeight: 'bold',
-              boxShadow: '0 4px 6px rgba(0,0,0,0.1)'
-            }}
+            style={{ padding: '15px 40px', fontSize: '22px', backgroundColor: '#22c55e', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold', boxShadow: '0 4px 6px rgba(0,0,0,0.1)' }}
           >
             Start Trial
           </button>
         </div>
       )}
 
-      {/* -2. Blank Screen Phase */}
-      {phase === PHASES.BLANK_SCREEN && (
-        <div className="fixation-screen">
-          {/* Renders a completely blank black screen */}
-        </div>
-      )}
+      {phase === PHASES.BLANK_SCREEN && <div className="fixation-screen" />}
+      {phase === PHASES.FIXATION && <div className="fixation-screen"><div className="fixation-cross" /></div>}
 
-      {/* -1. Fixation Screen Phase */}
-      {phase === PHASES.FIXATION && (
-        <div className="fixation-screen">
-          <div className="fixation-cross" />
-        </div>
-      )}
-
-      {/* 0. Observation Phase */}
       {phase === PHASES.OBSERVATION && (
-        <div className="observable-screen">
+        <div className="observable-screen" style={{ overflow: 'hidden', width: '100vw', height: '100vh', backgroundColor: 'black' }}>
           <canvas
             ref={canvasRef}
             className="observable-image"
-            style={{ pointerEvents: 'auto', cursor: 'none' }}
+            style={{ 
+              width: '100%', 
+              height: '100%', 
+              pointerEvents: 'auto', 
+              cursor: 'none',
+              objectFit: 'cover'
+            }}
           />
         </div>
       )}
 
-      {/* 1. Transition Screen */}
-      {phase === PHASES.TRANSITION && (
-        <div className="centered-view">
-          <h2>Transitioning to Interactive Mode...</h2>
-        </div>
-      )}
+      {phase === PHASES.TRANSITION && <div className="centered-view"><h2>Transitioning to Interactive Mode...</h2></div>}
 
-      {/* 2. Interactive Workspace */}
       {phase === PHASES.INTERACTIVE && (
         <div className="interactive-layout">
           <div className="interactive-toolbar">
             <h2>Target: {activeTarget}</h2>
             <div style={{ display: 'flex', gap: '12px' }}>
-              <button
-                onClick={handleReviewAndSave}
-                disabled={isProcessing}
-                className="btn-primary"
-              >
+              <button onClick={handleReviewAndSave} disabled={isProcessing} className="btn-primary">
                 {isProcessing ? 'Saving to Server...' : (currentTrialIndex + 1 < TRIAL_SEQUENCE.length ? 'Save & Next Trial' : 'Save & Finish')}
               </button>
             </div>
@@ -447,22 +446,16 @@ function App() {
                     className="interactive-viewport-img"
                     style={{ cursor: isProcessing ? 'wait' : 'crosshair' }}
                   />
-
                   {naturalDims && boundingboxes.map((box) => {
                     const leftPercent = (box.x / naturalDims.width) * 100;
                     const topPercent = (box.y / naturalDims.height) * 100;
                     const widthPercent = (box.width / naturalDims.width) * 100;
                     const heightPercent = (box.height / naturalDims.height) * 100;
-
                     return (
                       <div
                         key={box.id}
                         style={{
-                          position: 'absolute',
-                          left: `${leftPercent}%`,
-                          top: `${topPercent}%`,
-                          width: `${widthPercent}%`,
-                          height: `${heightPercent}%`,
+                          position: 'absolute', left: `${leftPercent}%`, top: `${topPercent}%`, width: `${widthPercent}%`, height: `${heightPercent}%`,
                           border: `2px solid ${box.isClicked ? '#ef4444' : '#22c55e'}`,
                           backgroundColor: box.isClicked ? 'rgba(239, 68, 68, 0.25)' : 'rgba(34, 197, 94, 0.15)',
                           pointerEvents: 'none'
@@ -477,24 +470,17 @@ function App() {
             <div className="interactive-card">
               <div className="interactive-card-title">Current Render</div>
               <div className="interactive-viewport-wrapper">
-                <img
-                  src={displayImage}
-                  alt="Inpainted State"
-                  className="interactive-viewport-img"
-                />
+                <img src={displayImage} alt="Inpainted State" className="interactive-viewport-img" />
               </div>
             </div>
           </div>
         </div>
       )}
 
-      {/* 3. Completed Phase */}
       {phase === PHASES.COMPLETED && (
         <div className="centered-view">
           <h2>Experiment Complete</h2>
-          <p style={{ marginTop: '12px', color: '#9ca3af' }}>
-            All session data has been successfully saved to the server.
-          </p>
+          <p style={{ marginTop: '12px', color: '#9ca3af' }}>All session data has been successfully saved to the server.</p>
         </div>
       )}
     </div>
