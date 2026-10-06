@@ -15,7 +15,8 @@ const PHASES = {
 };
 
 const TRIAL_SEQUENCE = [
-  "Trial_1_Living_Room",
+  "Trial_01_LivingRoom_FP205",
+  "Trial_02_BathRoom_FP403"
 ];
 
 const TARGET_SEQUENCE = [

@@ -19,11 +19,13 @@ def main():
     parser.add_argument("--dataset-type", choices=["ithor", "procthor"], default="ithor",
                         help="Choose between standard iTHOR scenes or ProcTHOR procedural houses")
     parser.add_argument("--scene", default="FloorPlan1", 
-                        help="The iTHOR scene to load when using --dataset-type ithor (e.g., FloorPlan1, FloorPlan401)")
+                        help="The iTHOR scene to load when using --dataset-type ithor (e.g., FloorPlan1, FloorPlan202)")
     parser.add_argument("--procthor-house-id", type=int, default=0,
                         help="Integer house index from procthor-10k dataset when using --dataset-type procthor")
     parser.add_argument("--procthor-split", default="train", choices=["train", "val", "test"],
                         help="Dataset split to sample ProcTHOR houses from")
+    parser.add_argument("--scene-path", default=None,
+                        help="Direct path to a custom ProcTHOR JSON file (e.g., custom_scenes/classroom_1.json)")
 
     parser.add_argument("--trial", default="Trial_1_FP1_Island", help="The output folder name (e.g., Trial_1_FP1_Island)")
     
@@ -64,30 +66,41 @@ def main():
     else:
         print(f"Probing scene for visible objects...")
 
-    with ThorRenderer(width=1024, height=576, gpu_device=1, quality="Ultra") as r:
+    with ThorRenderer(width=1024, height=576, gpu_device=1, quality="High") as r:
+        controller = r.controller
+
         # 1. Branch between iTHOR and ProcTHOR Scene Initialisation
         if args.dataset_type == "ithor":
-            r.controller.reset(
+            controller.reset(
                 scene=args.scene, 
                 snapToGrid=False,
-                renderInstanceSegmentation=True
+                renderInstanceSegmentation=True,
+                autoSimulation=False
             )
         else:
-            try:
-                import prior
-            except ImportError:
-                print("Error: The 'prior' package is required for ProcTHOR. Install it via: pip install prior")
-                sys.exit(1)
+            if args.scene_path and os.path.exists(args.scene_path):
+                print(f"Loading custom ProcTHOR layout from {args.scene_path}...")
+                with open(args.scene_path, "r") as f:
+                    house = json.load(f)
+            else:
+                try:
+                    import prior
+                except ImportError:
+                    print("Error: The 'prior' package is required for ProcTHOR. Install it via: pip install prior")
+                    sys.exit(1)
+                
+                print(f"Loading ProcTHOR house ID {args.procthor_house_id} from split '{args.procthor_split}'...")
+                dataset = prior.load_dataset("procthor-10k")
+                house = dataset[args.procthor_split][args.procthor_house_id]
             
-            print(f"Loading ProcTHOR house ID {args.procthor_house_id} from split '{args.procthor_split}'...")
-            dataset = prior.load_dataset("procthor-10k")
-            house = dataset[args.procthor_split][args.procthor_house_id]
-            
-            r.controller.reset(scene="Procedural", renderInstanceSegmentation=True)
-            r.controller.step(action="CreateHouse", house=house)
+            controller.reset(scene="Procedural", renderInstanceSegmentation=True, autoSimulation=False)
+            controller.step(action="CreateHouse", house=house)
         
-        # 2. Teleport to target camera coordinates
-        event = r.controller.step(
+        # 2. Freeze Unity physics engine to prevent object shifting/dropping
+        controller.step(action="PausePhysicsAutoSim")
+
+        # 3. Teleport to target camera coordinates
+        event = controller.step(
             action="TeleportFull",
             x=args.x,
             y=args.y,
@@ -111,12 +124,12 @@ def main():
             print("=============================\nExiting probe mode. No files were generated.")
             return
 
-        # 3. Save full interactive base image as int.jpg
+        # 4. Save full interactive base image as int.jpg
         int_path = os.path.join(out_dir, "int.jpg")
         Image.fromarray(event.frame).save(int_path, format="JPEG", quality=85)
         print(f"Saved interactive base image: {int_path}")
 
-        # 4. Extract Native 2D Bounding Boxes
+        # 5. Extract Native 2D Bounding Boxes
         target_types = set(args.targets)
         
         target_objects = [
@@ -152,12 +165,16 @@ def main():
         
         print(f"Target items detected ({len(items)}): {[label for label, _, _ in items]}")
 
+        if not items:
+            print("[Error] No target objects were found visible at this camera viewpoint.")
+            return
+
         bbox_path = os.path.join(out_dir, "bounding_boxes.json")
         with open(bbox_path, 'w') as f:
             json.dump(bboxes_data, f, indent=4)
         print(f"Saved native bounding boxes to: {bbox_path}")
 
-        # 5. Combinatorial Image Generation
+        # 6. Combinatorial Image Generation
         total_generated = 0
         valid_obs_candidates = []
 
@@ -165,17 +182,17 @@ def main():
             for combo in itertools.combinations(items, k):
                 # Ensure all items are enabled before processing combination
                 for _, obj_id, _ in items:
-                    r.controller.step(action="EnableObject", objectId=obj_id)
+                    controller.step(action="EnableObject", objectId=obj_id)
 
                 # Disable combination targets
                 for _, obj_id, _ in combo:
-                    r.controller.step(action="DisableObject", objectId=obj_id)
+                    controller.step(action="DisableObject", objectId=obj_id)
 
                 labels_removed = sorted([label for label, _, _ in combo])
                 filename = f"removed_{'_'.join(labels_removed)}.jpg"
                 file_path = os.path.join(out_dir, filename)
                 
-                Image.fromarray(r.controller.last_event.frame).save(
+                Image.fromarray(controller.last_event.frame).save(
                     file_path, 
                     format="JPEG", 
                     quality=85
@@ -187,7 +204,7 @@ def main():
 
                 total_generated += 1
                 
-        # 6. Determine the Default obs.jpg Configuration
+        # 7. Determine the Default obs.jpg Configuration
         if args.exclude_obs:
             requested_args = [t.lower() for t in args.exclude_obs]
             explicit_labels = []
@@ -229,7 +246,7 @@ def main():
 
         # Re-enable all objects after run
         for _, obj_id, _ in items:
-            r.controller.step(action="EnableObject", objectId=obj_id)
+            controller.step(action="EnableObject", objectId=obj_id)
 
         print(f"\nCompleted {args.trial}. {total_generated} permutations saved.")
 

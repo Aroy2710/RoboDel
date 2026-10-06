@@ -1,0 +1,92 @@
+[
+    {
+        "id": 1,
+        "label": "Box_1",
+        "x": 456,
+        "y": 327,
+        "width": 16,
+        "height": 13,
+        "isClicked": false
+    },
+    {
+        "id": 2,
+        "label": "DeskLamp_1",
+        "x": 631,
+        "y": 298,
+        "width": 25,
+        "height": 40,
+        "isClicked": false
+    },
+    {
+        "id": 3,
+        "label": "FloorLamp_1",
+        "x": 127,
+        "y": 224,
+        "width": 107,
+        "height": 270,
+        "isClicked": false
+    },
+    {
+        "id": 4,
+        "label": "GarbageCan_1",
+        "x": 506,
+        "y": 309,
+        "width": 19,
+        "height": 23,
+        "isClicked": false
+    },
+    {
+        "id": 5,
+        "label": "HousePlant_1",
+        "x": 596,
+        "y": 296,
+        "width": 25,
+        "height": 31,
+        "isClicked": false
+    },
+    {
+        "id": 6,
+        "label": "Laptop_1",
+        "x": 732,
+        "y": 366,
+        "width": 73,
+        "height": 67,
+        "isClicked": false
+    },
+    {
+        "id": 7,
+        "label": "Painting_1",
+        "x": 548,
+        "y": 218,
+        "width": 28,
+        "height": 45,
+        "isClicked": false
+    },
+    {
+        "id": 8,
+        "label": "Statue_1",
+        "x": 811,
+        "y": 355,
+        "width": 65,
+        "height": 80,
+        "isClicked": false
+    },
+    {
+        "id": 9,
+        "label": "Television_1",
+        "x": 349,
+        "y": 271,
+        "width": 64,
+        "height": 43,
+        "isClicked": false
+    },
+    {
+        "id": 10,
+        "label": "WateringCan_1",
+        "x": 644,
+        "y": 366,
+        "width": 11,
+        "height": 17,
+        "isClicked": false
+    }
+]
