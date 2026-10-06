@@ -4,6 +4,7 @@ import json
 import argparse
 import itertools
 import shutil
+import random
 from PIL import Image
 
 # Add repository root to Python path
@@ -12,8 +13,18 @@ sys.path.insert(0, REPO_ROOT)
 from thor3d import ThorRenderer
 
 def main():
-    parser = argparse.ArgumentParser(description="AI2-THOR Batch Combinatorial Generator")
-    parser.add_argument("--scene", default="FloorPlan1", help="The AI2-THOR scene to load (e.g., FloorPlan1)")
+    parser = argparse.ArgumentParser(description="AI2-THOR / ProcTHOR Batch Combinatorial Generator")
+    
+    # Environment Selector
+    parser.add_argument("--dataset-type", choices=["ithor", "procthor"], default="ithor",
+                        help="Choose between standard iTHOR scenes or ProcTHOR procedural houses")
+    parser.add_argument("--scene", default="FloorPlan1", 
+                        help="The iTHOR scene to load when using --dataset-type ithor (e.g., FloorPlan1, FloorPlan401)")
+    parser.add_argument("--procthor-house-id", type=int, default=0,
+                        help="Integer house index from procthor-10k dataset when using --dataset-type procthor")
+    parser.add_argument("--procthor-split", default="train", choices=["train", "val", "test"],
+                        help="Dataset split to sample ProcTHOR houses from")
+
     parser.add_argument("--trial", default="Trial_1_FP1_Island", help="The output folder name (e.g., Trial_1_FP1_Island)")
     
     # Camera Telemetry Arguments
@@ -28,8 +39,14 @@ def main():
     # Target Objects Argument
     parser.add_argument("--targets", nargs='+', default=["Apple", "Bowl", "Bread", "Tomato", "Book", "Card"], 
                         help="Space-separated list of target objects to detect and ablate")
+    
+    # Dual Functionality for Observation Image
+    parser.add_argument("--random-obs", action="store_true", 
+                        help="Generate obs.jpg by randomly selecting a combination with 2-5 objects removed.")
+    parser.add_argument("--exclude-obs", nargs='+', default=[], 
+                        help="Generate obs.jpg by explicitly removing a space-separated list of object types or exact labels (e.g., Chair chair_2).")
                         
-    # Added Debug Flag
+    # Debug Flag
     parser.add_argument("--list-objects", action="store_true", help="Only output visible objects from this coordinate and exit")
 
     args = parser.parse_args()
@@ -37,23 +54,39 @@ def main():
     # Dynamic path: resolves to <this_repo>/public/Prerendered_Scenes/<trial>
     out_dir = os.path.join(REPO_ROOT, "public", "Prerendered_Scenes", args.trial)
     
-    # Only clear directories if we are doing a full generation run
+    # Only clear directories if performing a full generation run
     if not args.list_objects:
         if os.path.exists(out_dir):
             print(f"Clearing existing contents in {out_dir}...")
             shutil.rmtree(out_dir)
         os.makedirs(out_dir, exist_ok=True)
-        print(f"Initializing {args.scene} -> Saving to {out_dir}")
+        print(f"Initializing ({args.dataset_type}) -> Saving to {out_dir}")
     else:
-        print(f"Probing {args.scene} for visible objects...")
+        print(f"Probing scene for visible objects...")
 
     with ThorRenderer(width=1024, height=576, gpu_device=1, quality="Ultra") as r:
-        r.controller.reset(
-            scene=args.scene, 
-            snapToGrid=False,
-            renderInstanceSegmentation=True
-        )
+        # 1. Branch between iTHOR and ProcTHOR Scene Initialisation
+        if args.dataset_type == "ithor":
+            r.controller.reset(
+                scene=args.scene, 
+                snapToGrid=False,
+                renderInstanceSegmentation=True
+            )
+        else:
+            try:
+                import prior
+            except ImportError:
+                print("Error: The 'prior' package is required for ProcTHOR. Install it via: pip install prior")
+                sys.exit(1)
+            
+            print(f"Loading ProcTHOR house ID {args.procthor_house_id} from split '{args.procthor_split}'...")
+            dataset = prior.load_dataset("procthor-10k")
+            house = dataset[args.procthor_split][args.procthor_house_id]
+            
+            r.controller.reset(scene="Procedural", renderInstanceSegmentation=True)
+            r.controller.step(action="CreateHouse", house=house)
         
+        # 2. Teleport to target camera coordinates
         event = r.controller.step(
             action="TeleportFull",
             x=args.x,
@@ -70,7 +103,7 @@ def main():
         # Extract and sort all unique object types visible to the camera
         visible_types = sorted(list(set(o['objectType'] for o in live_objects if o['objectId'] in detections2D)))
         
-        # 1. Early Exit Condition for Probing
+        # Early Exit Condition for Probing
         if args.list_objects:
             print("\n=== VISIBLE OBJECTS FOUND ===")
             for obj_type in visible_types:
@@ -78,13 +111,12 @@ def main():
             print("=============================\nExiting probe mode. No files were generated.")
             return
 
-        # 2. Save base image as JPEG with 85% quality compression
-        base_path = os.path.join(out_dir, "base.jpg")
-        Image.fromarray(event.frame).save(base_path, format="JPEG", quality=85)
-        print(f"Saved base image: {base_path}")
+        # 3. Save full interactive base image as int.jpg
+        int_path = os.path.join(out_dir, "int.jpg")
+        Image.fromarray(event.frame).save(int_path, format="JPEG", quality=85)
+        print(f"Saved interactive base image: {int_path}")
 
-        # 3. Extract Native 2D Bounding Boxes
-# 3. Extract Native 2D Bounding Boxes
+        # 4. Extract Native 2D Bounding Boxes
         target_types = set(args.targets)
         
         target_objects = [
@@ -94,20 +126,18 @@ def main():
         
         bboxes_data = []
         items = []
-        type_counters = {} # Tracks how many of each object we've seen
+        type_counters = {} 
 
         for idx, obj in enumerate(target_objects):
             obj_id = obj['objectId']
             obj_type = obj['objectType']
             
-            # Increment the counter for this specific object type
             type_counters[obj_type] = type_counters.get(obj_type, 0) + 1
             
-            # Create a uniquely numbered label (e.g., vase_1, vase_2)
             unique_lower_label = f"{obj_type.lower()}_{type_counters[obj_type]}"
             unique_display_label = f"{obj_type}_{type_counters[obj_type]}"
             
-            items.append((unique_lower_label, obj_id))
+            items.append((unique_lower_label, obj_id, obj_type))
             
             start_x, start_y, end_x, end_y = detections2D[obj_id]
             bboxes_data.append({
@@ -120,37 +150,85 @@ def main():
                 "isClicked": False
             })
         
-        print(f"Target items detected ({len(items)}): {[label for label, _ in items]}")
+        print(f"Target items detected ({len(items)}): {[label for label, _, _ in items]}")
 
         bbox_path = os.path.join(out_dir, "bounding_boxes.json")
         with open(bbox_path, 'w') as f:
             json.dump(bboxes_data, f, indent=4)
         print(f"Saved native bounding boxes to: {bbox_path}")
 
-        # 4. Combinatorial Image Generation
+        # 5. Combinatorial Image Generation
         total_generated = 0
+        valid_obs_candidates = []
+
         for k in range(1, len(items) + 1):
             for combo in itertools.combinations(items, k):
                 # Ensure all items are enabled before processing combination
-                for _, obj_id in items:
+                for _, obj_id, _ in items:
                     r.controller.step(action="EnableObject", objectId=obj_id)
 
                 # Disable combination targets
-                for _, obj_id in combo:
+                for _, obj_id, _ in combo:
                     r.controller.step(action="DisableObject", objectId=obj_id)
 
-                labels_removed = sorted([label for label, _ in combo])
+                labels_removed = sorted([label for label, _, _ in combo])
                 filename = f"removed_{'_'.join(labels_removed)}.jpg"
+                file_path = os.path.join(out_dir, filename)
                 
                 Image.fromarray(r.controller.last_event.frame).save(
-                    os.path.join(out_dir, filename), 
+                    file_path, 
                     format="JPEG", 
                     quality=85
                 )
                 print(f"-> Generated {filename}")
-                total_generated += 1
+                
+                if 2 <= k <= 5:
+                    valid_obs_candidates.append(file_path)
 
-        for _, obj_id in items:
+                total_generated += 1
+                
+        # 6. Determine the Default obs.jpg Configuration
+        if args.exclude_obs:
+            requested_args = [t.lower() for t in args.exclude_obs]
+            explicit_labels = []
+            available_items = list(items)
+            
+            for req in requested_args:
+                match = next((item for item in available_items if item[0].lower() == req), None)
+                if not match:
+                    default_instance_label = f"{req}_1"
+                    match = next((item for item in available_items if item[0].lower() == default_instance_label), None)
+                if not match:
+                    match = next((item for item in available_items if item[2].lower() == req), None)
+                
+                if match:
+                    explicit_labels.append(match[0])
+                    available_items.remove(match)
+                else:
+                    print(f"-> WARNING: Could not find available match for requested removal: {req}")
+            
+            explicit_labels.sort()
+            
+            if explicit_labels:
+                filename = f"removed_{'_'.join(explicit_labels)}.jpg"
+                target_file = os.path.join(out_dir, filename)
+                
+                if os.path.exists(target_file):
+                    shutil.copy(target_file, os.path.join(out_dir, "obs.jpg"))
+                    print(f"-> Duplicated {filename} as obs.jpg (Explicit Exclude Mode)")
+                else:
+                    print(f"-> WARNING: Requested explicit combination {filename} was not generated.")
+            else:
+                print("-> WARNING: None of the requested explicit objects were successfully matched.")
+                
+        elif args.random_obs or not args.exclude_obs:
+            if valid_obs_candidates:
+                chosen_obs = random.choice(valid_obs_candidates)
+                shutil.copy(chosen_obs, os.path.join(out_dir, "obs.jpg"))
+                print(f"-> Duplicated {os.path.basename(chosen_obs)} as obs.jpg (Random Mode)")
+
+        # Re-enable all objects after run
+        for _, obj_id, _ in items:
             r.controller.step(action="EnableObject", objectId=obj_id)
 
         print(f"\nCompleted {args.trial}. {total_generated} permutations saved.")

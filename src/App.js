@@ -15,15 +15,11 @@ const PHASES = {
 };
 
 const TRIAL_SEQUENCE = [
-  "Trial_1_FP1_Island",
-  "Trial_2_FP207_LivingRoom",
-  "Trial_x_FP7_Counter"
+  "Trial_1_Living_Room",
 ];
 
 const TARGET_SEQUENCE = [
   "Pan",
-  "Bottle",
-  "Plant"
 ];
 
 function App() {
@@ -31,13 +27,15 @@ function App() {
   const activeFolder = TRIAL_SEQUENCE[currentTrialIndex] || TRIAL_SEQUENCE[0];
   const activeTarget = TARGET_SEQUENCE[currentTrialIndex] || TARGET_SEQUENCE[0];
 
-  const modifiedImage = `/Prerendered_Scenes/${activeFolder}/base.jpg`;
+  // EXPERIMENTAL DESIGN: Strict unified naming convention
+  const observationImage = `/Prerendered_Scenes/${activeFolder}/obs.jpg`;
+  const interactiveBaseImage = `/Prerendered_Scenes/${activeFolder}/int.jpg`;
 
   const [participantId, setParticipantId] = useState("");
   const [phase, setPhase] = useState(PHASES.ID_ENTRY);
   const [isProcessing, setIsProcessing] = useState(false);
 
-  const [displayImage, setDisplayImage] = useState(modifiedImage);
+  const [displayImage, setDisplayImage] = useState(observationImage);
   const workingImageRef = useRef(null);
   
   const canvasRef = useRef(null);
@@ -54,7 +52,7 @@ function App() {
   const [naturalDims, setNaturalDims] = useState(null);
 
   useEffect(() => {
-    setDisplayImage(modifiedImage);
+    setDisplayImage(observationImage);
     setRemovedObjects([]);
     setRemovedLabels([]);
     setPhase(currentTrialIndex === 0 ? PHASES.ID_ENTRY : PHASES.TARGET_PROMPT); 
@@ -70,14 +68,12 @@ function App() {
       const TARGET_W = ref.naturalWidth;
       const TARGET_H = ref.naturalHeight;
 
-      // 1. Draw base image exactly at its native resolution (e.g., 1024x576)
       const c0 = document.createElement('canvas');
       c0.width = TARGET_W;
       c0.height = TARGET_H;
       const ctx0 = c0.getContext('2d');
       ctx0.drawImage(ref, 0, 0, TARGET_W, TARGET_H);
       
-      // 2. Build the iterative downsampled Gaussian pyramid
       const levels = [c0];
       for (let i = 1; i < 6; i++) {
         const prev = levels[i - 1];
@@ -91,8 +87,7 @@ function App() {
         levels.push(c);
       }
 
-      // 3. Interpolate all levels back up with proportional Gaussian blur
-      const pyramid = [];
+      const tempPyramid = [];
       const tempCanvas = document.createElement('canvas');
       tempCanvas.width = TARGET_W;
       tempCanvas.height = TARGET_H;
@@ -112,21 +107,36 @@ function App() {
         tempCtx.drawImage(levels[i], 0, 0, levels[i].width, levels[i].height, 0, 0, TARGET_W, TARGET_H);
         
         const imgData = tempCtx.getImageData(0, 0, TARGET_W, TARGET_H);
-        pyramid.push(new Uint32Array(imgData.data.buffer));
+        tempPyramid.push(new Uint32Array(imgData.data.buffer));
       }
       
-      pyramidRefs.current = pyramid;
+      const totalPixels = TARGET_W * TARGET_H;
+      const interleaved = new Uint32Array(totalPixels * 6);
+      for (let i = 0; i < totalPixels; i++) {
+        interleaved[i * 6 + 0] = tempPyramid[0][i];
+        interleaved[i * 6 + 1] = tempPyramid[1][i];
+        interleaved[i * 6 + 2] = tempPyramid[2][i];
+        interleaved[i * 6 + 3] = tempPyramid[3][i];
+        interleaved[i * 6 + 4] = tempPyramid[4][i];
+        interleaved[i * 6 + 5] = tempPyramid[5][i];
+      }
+      pyramidRefs.current = interleaved;
 
-      // 4. PRE-COMPUTE THE SALICON BLENDING LOOKUP TABLE (LUT)
-      // Proportionally scale the physical 1080p p-value down to the native image width
       const p = 29.719 * (TARGET_W / 1920); 
       const alpha = 2.5; 
       const maxDistSq = (TARGET_W * TARGET_W) + (TARGET_H * TARGET_H);
       const lut = new Float32Array(maxDistSq * 2);
+      
+      const fovealRadius = p * 2.0; 
 
       for (let dSq = 0; dSq < maxDistSq; dSq++) {
         const d = Math.sqrt(dSq); 
-        const theta = d / p;
+        
+        let theta = 0;
+        if (d > fovealRadius) {
+          theta = (d - fovealRadius) / p;
+        }
+        
         const R = alpha / (alpha + theta); 
 
         let L = (1.0 - R) * 5.0;
@@ -139,8 +149,8 @@ function App() {
       
       saliconLUTRef.current = lut;
     };
-    ref.src = modifiedImage;
-  }, [currentTrialIndex, modifiedImage]);
+    ref.src = observationImage; 
+  }, [currentTrialIndex, observationImage]);
 
   useEffect(() => {
     if (currentTrialIndex >= TRIAL_SEQUENCE.length) return;
@@ -161,21 +171,26 @@ function App() {
   }, [phase]);
 
   useEffect(() => {
-    if (phase === PHASES.OBSERVATION && naturalDims && workingImageRef.current && pyramidRefs.current.length === 6) {
+    if (phase === PHASES.OBSERVATION && naturalDims && workingImageRef.current && pyramidRefs.current.length > 0) {
       const canvas = canvasRef.current;
       if (!canvas) return;
       
-      // Lock internal loop exactly to native image resolution (e.g., 1024x576)
       canvas.width = naturalDims.width;
       canvas.height = naturalDims.height;
-      const ctx = canvas.getContext('2d');
+      const ctx = canvas.getContext('2d', { alpha: false }); 
 
       const p = 29.719 * (canvas.width / 1920); 
+      const w = canvas.width;
+      const h = canvas.height;
+      const maxDistSq = (w * w) + (h * h);
+
+      const outData = new Uint8ClampedArray(w * h * 4);
+      const out32 = new Uint32Array(outData.buffer);
+      const dxSqArray = new Uint32Array(w); 
 
       const handleMouseMove = (e) => {
         const rect = canvas.getBoundingClientRect();
         
-        // Translates screen coordinate to internal array coordinate accurately
         const scaleX = canvas.width / rect.width;
         const scaleY = canvas.height / rect.height;
         const mx = Math.round((e.clientX - rect.left) * scaleX);
@@ -186,15 +201,13 @@ function App() {
         if (renderFrameRef.current) cancelAnimationFrame(renderFrameRef.current);
         
         renderFrameRef.current = requestAnimationFrame(() => {
-          const w = canvas.width;
-          const h = canvas.height;
-          const maxDistSq = (w * w) + (h * h);
-          
-          const outData = new Uint8ClampedArray(w * h * 4);
-          const out32 = new Uint32Array(outData.buffer);
-          
           const lut = saliconLUTRef.current;
           const pyra = pyramidRefs.current;
+
+          for (let px = 0; px < w; px++) {
+            const dx = px - mx;
+            dxSqArray[px] = dx * dx;
+          }
 
           let i = 0;
           for (let py = 0; py < h; py++) {
@@ -202,8 +215,7 @@ function App() {
             const dySq = dy * dy; 
             
             for (let px = 0; px < w; px++) {
-              const dx = px - mx;
-              let distSq = (dx * dx) + dySq;
+              let distSq = dxSqArray[px] + dySq;
               if (distSq >= maxDistSq) distSq = maxDistSq - 1;
 
               const lutIdx = distSq << 1; 
@@ -213,8 +225,9 @@ function App() {
 
               const layerB = layerA < 5 ? layerA + 1 : 5;
 
-              const colorA = pyra[layerA][i];
-              const colorB = pyra[layerB][i];
+              const offset = i * 6;
+              const colorA = pyra[offset + layerA];
+              const colorB = pyra[offset + layerB];
 
               const r = (colorA & 0xff) * weightA + (colorB & 0xff) * weightB;
               const g = ((colorA >> 8) & 0xff) * weightA + ((colorB >> 8) & 0xff) * weightB;
@@ -228,7 +241,7 @@ function App() {
           ctx.putImageData(new ImageData(outData, w, h), 0, 0);
 
           ctx.strokeStyle = 'rgba(255, 0, 0, 0.65)';
-          ctx.lineWidth = 2 * scaleX; // Scales line width so it doesn't look overly thick after CSS stretch
+          ctx.lineWidth = 2 * scaleX; 
           ctx.beginPath();
           ctx.arc(mx, my, p * 2.0, 0, 2 * Math.PI); 
           ctx.stroke();
@@ -306,8 +319,10 @@ function App() {
     setRemovedObjects(newRemovedObjects);
 
     const sortedLabels = [...newRemovedLabels].sort();
+    
+    // Updated default fall-back image to int.jpg
     const filename = sortedLabels.length === 0 
-      ? "base.jpg" 
+      ? "int.jpg" 
       : `removed_${sortedLabels.join('_')}.jpg`;
 
     const newImageSrc = `/Prerendered_Scenes/${activeFolder}/${filename}`;
@@ -435,12 +450,12 @@ function App() {
 
           <div className="interactive-windows-grid">
             <div className="interactive-card">
-              <div className="interactive-card-title">Interactive Image (Remove objects that were not in original image)</div>
+              <div className="interactive-card-title">Interactive Image (Identify the newly added object)</div>
               <div className="interactive-viewport-wrapper">
                 <div style={{ position: 'relative', display: 'inline-block', lineHeight: 0, maxHeight: '100%', maxWidth: '100%' }}>
                   <img
                     id="interactive-scene-img"
-                    src={modifiedImage}
+                    src={interactiveBaseImage}
                     onClick={handleImageClick}
                     alt="Interactive Target"
                     className="interactive-viewport-img"

@@ -10,11 +10,22 @@ import uvicorn
 from PIL import Image
 
 # 1. Parse command-line arguments before starting the server
-parser = argparse.ArgumentParser(description="AI2-THOR Web Explorer")
-# Set default to FloorPlan1 so it still works if you forget to pass an argument
-parser.add_argument("scene", nargs="?", default="FloorPlan1", help="The floor plan to load (e.g., FloorPlan2)")
+parser = argparse.ArgumentParser(description="AI2-THOR & ProcTHOR Web Explorer")
+parser.add_argument("--dataset-type", choices=["ithor", "procthor"], default="ithor",
+                    help="Choose between standard iTHOR scenes or ProcTHOR procedural houses")
+parser.add_argument("scene", nargs="?", default="FloorPlan1", 
+                    help="The iTHOR floor plan to load (e.g., FloorPlan1, FloorPlan201, FloorPlan401)")
+parser.add_argument("--procthor-house-id", type=int, default=0,
+                    help="Integer house index from procthor-10k dataset when using --dataset-type procthor")
+parser.add_argument("--procthor-split", default="train", choices=["train", "val", "test"],
+                    help="Dataset split to sample ProcTHOR houses from")
+parser.add_argument("--port", type=int, default=8001, help="Port to run the FastAPI server on")
+
 args = parser.parse_args()
+DATASET_TYPE = args.dataset_type
 TARGET_SCENE = args.scene
+PROCTHOR_HOUSE_ID = args.procthor_house_id
+PROCTHOR_SPLIT = args.procthor_split
 
 # Import your custom renderer
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -26,11 +37,30 @@ r = None
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     global renderer_instance, r
-    print(f"Initializing renderer with scene: {TARGET_SCENE}")
+    
     renderer_instance = ThorRenderer(width=800, height=600, gpu_device=1, quality="Medium")
     r = renderer_instance.__enter__()
-    # 2. Feed the parsed argument into the reset function
-    r.controller.reset(scene=TARGET_SCENE)
+    
+    # 2. Branch initialization between iTHOR and ProcTHOR
+    if DATASET_TYPE == "ithor":
+        print(f"Initializing iTHOR scene: {TARGET_SCENE}")
+        r.controller.reset(scene=TARGET_SCENE)
+    else:
+        try:
+            import prior
+        except ImportError:
+            print("\nError: The 'prior' package is required to load ProcTHOR houses.")
+            print("Run: pip install prior\n")
+            sys.exit(1)
+            
+        print(f"Loading ProcTHOR-10k ({PROCTHOR_SPLIT} split, House ID: {PROCTHOR_HOUSE_ID})...")
+        dataset = prior.load_dataset("procthor-10k")
+        house = dataset[PROCTHOR_SPLIT][PROCTHOR_HOUSE_ID]
+        
+        r.controller.reset(scene="Procedural")
+        r.controller.step(action="CreateHouse", house=house)
+        print("ProcTHOR house created successfully.")
+        
     yield
     if renderer_instance:
         renderer_instance.__exit__(None, None, None)
@@ -69,11 +99,16 @@ def step(action: str = "Pass"):
 
 @app.get("/", response_class=HTMLResponse)
 def index():
-    # 3. Dynamically inject the scene name into the web UI title
+    display_title = (
+        f"iTHOR: {TARGET_SCENE}" 
+        if DATASET_TYPE == "ithor" 
+        else f"ProcTHOR: House #{PROCTHOR_HOUSE_ID} ({PROCTHOR_SPLIT})"
+    )
+    
     return f"""
     <html>
     <body style="background:#1e1e1e; color:#fff; text-align:center; font-family:monospace;">
-        <h2>AI2-THOR Live Explorer: <span style="color:#FF9800;">{TARGET_SCENE}</span></h2>
+        <h2>AI2-THOR Live Explorer: <span style="color:#FF9800;">{display_title}</span></h2>
         <img id="view" src="" style="width:800px; height:600px; border:2px solid #555; border-radius:8px;"/>
         
         <div style="margin-top:20px; font-size:18px; background:#2d2d2d; display:inline-block; padding:15px; border-radius:8px;">
@@ -125,4 +160,4 @@ def index():
     """
 
 if __name__ == "__main__":
-    uvicorn.run(app, host="0.0.0.0", port=8001)
+    uvicorn.run(app, host="0.0.0.0", port=args.port)

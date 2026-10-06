@@ -1,0 +1,92 @@
+[
+    {
+        "id": 1,
+        "label": "DiningTable_1",
+        "x": 664,
+        "y": 395,
+        "width": 359,
+        "height": 180,
+        "isClicked": false
+    },
+    {
+        "id": 2,
+        "label": "GarbageCan_1",
+        "x": 107,
+        "y": 384,
+        "width": 73,
+        "height": 62,
+        "isClicked": false
+    },
+    {
+        "id": 3,
+        "label": "HousePlant_1",
+        "x": 399,
+        "y": 332,
+        "width": 40,
+        "height": 47,
+        "isClicked": false
+    },
+    {
+        "id": 4,
+        "label": "Laptop_1",
+        "x": 739,
+        "y": 381,
+        "width": 110,
+        "height": 81,
+        "isClicked": false
+    },
+    {
+        "id": 5,
+        "label": "Ottoman_1",
+        "x": 108,
+        "y": 566,
+        "width": 108,
+        "height": 9,
+        "isClicked": false
+    },
+    {
+        "id": 6,
+        "label": "Painting_1",
+        "x": 259,
+        "y": 207,
+        "width": 78,
+        "height": 74,
+        "isClicked": false
+    },
+    {
+        "id": 7,
+        "label": "SideTable_1",
+        "x": 407,
+        "y": 374,
+        "width": 109,
+        "height": 79,
+        "isClicked": false
+    },
+    {
+        "id": 8,
+        "label": "Statue_1",
+        "x": 765,
+        "y": 361,
+        "width": 39,
+        "height": 52,
+        "isClicked": false
+    },
+    {
+        "id": 9,
+        "label": "WateringCan_1",
+        "x": 483,
+        "y": 414,
+        "width": 14,
+        "height": 25,
+        "isClicked": false
+    },
+    {
+        "id": 10,
+        "label": "Window_1",
+        "x": 564,
+        "y": 241,
+        "width": 120,
+        "height": 146,
+        "isClicked": false
+    }
+]
