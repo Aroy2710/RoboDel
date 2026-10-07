@@ -1,0 +1,92 @@
+[
+    {
+        "id": 1,
+        "label": "Apple_1",
+        "x": 684,
+        "y": 326,
+        "width": 27,
+        "height": 26,
+        "isClicked": false
+    },
+    {
+        "id": 2,
+        "label": "Bowl_1",
+        "x": 987,
+        "y": 429,
+        "width": 36,
+        "height": 49,
+        "isClicked": false
+    },
+    {
+        "id": 3,
+        "label": "Bread_1",
+        "x": 703,
+        "y": 314,
+        "width": 63,
+        "height": 42,
+        "isClicked": false
+    },
+    {
+        "id": 4,
+        "label": "CoffeeMachine_1",
+        "x": 430,
+        "y": 238,
+        "width": 34,
+        "height": 48,
+        "isClicked": false
+    },
+    {
+        "id": 5,
+        "label": "Cup_1",
+        "x": 784,
+        "y": 354,
+        "width": 32,
+        "height": 27,
+        "isClicked": false
+    },
+    {
+        "id": 6,
+        "label": "Kettle_1",
+        "x": 399,
+        "y": 265,
+        "width": 19,
+        "height": 18,
+        "isClicked": false
+    },
+    {
+        "id": 7,
+        "label": "Lettuce_1",
+        "x": 367,
+        "y": 292,
+        "width": 19,
+        "height": 7,
+        "isClicked": false
+    },
+    {
+        "id": 8,
+        "label": "PaperTowelRoll_1",
+        "x": 420,
+        "y": 261,
+        "width": 8,
+        "height": 19,
+        "isClicked": false
+    },
+    {
+        "id": 9,
+        "label": "SoapBottle_1",
+        "x": 383,
+        "y": 260,
+        "width": 15,
+        "height": 26,
+        "isClicked": false
+    },
+    {
+        "id": 10,
+        "label": "Tomato_1",
+        "x": 342,
+        "y": 292,
+        "width": 15,
+        "height": 13,
+        "isClicked": false
+    }
+]

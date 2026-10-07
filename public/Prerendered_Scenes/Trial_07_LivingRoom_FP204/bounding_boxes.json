@@ -1,0 +1,92 @@
+[
+    {
+        "id": 1,
+        "label": "CreditCard_1",
+        "x": 428,
+        "y": 418,
+        "width": 16,
+        "height": 4,
+        "isClicked": false
+    },
+    {
+        "id": 2,
+        "label": "DeskLamp_1",
+        "x": 162,
+        "y": 350,
+        "width": 72,
+        "height": 63,
+        "isClicked": false
+    },
+    {
+        "id": 3,
+        "label": "GarbageCan_1",
+        "x": 0,
+        "y": 488,
+        "width": 102,
+        "height": 87,
+        "isClicked": false
+    },
+    {
+        "id": 4,
+        "label": "HousePlant_1",
+        "x": 496,
+        "y": 291,
+        "width": 22,
+        "height": 27,
+        "isClicked": false
+    },
+    {
+        "id": 5,
+        "label": "KeyChain_1",
+        "x": 441,
+        "y": 406,
+        "width": 13,
+        "height": 9,
+        "isClicked": false
+    },
+    {
+        "id": 6,
+        "label": "Laptop_1",
+        "x": 321,
+        "y": 355,
+        "width": 72,
+        "height": 53,
+        "isClicked": false
+    },
+    {
+        "id": 7,
+        "label": "Painting_1",
+        "x": 478,
+        "y": 253,
+        "width": 55,
+        "height": 41,
+        "isClicked": false
+    },
+    {
+        "id": 8,
+        "label": "Painting_2",
+        "x": 631,
+        "y": 221,
+        "width": 41,
+        "height": 66,
+        "isClicked": false
+    },
+    {
+        "id": 9,
+        "label": "Statue_1",
+        "x": 793,
+        "y": 281,
+        "width": 39,
+        "height": 22,
+        "isClicked": false
+    },
+    {
+        "id": 10,
+        "label": "Statue_2",
+        "x": 732,
+        "y": 285,
+        "width": 36,
+        "height": 12,
+        "isClicked": false
+    }
+]

@@ -1,0 +1,65 @@
+[
+    {
+        "id": 1,
+        "label": "Candle_1",
+        "x": 251,
+        "y": 369,
+        "width": 5,
+        "height": 24,
+        "isClicked": false
+    },
+    {
+        "id": 2,
+        "label": "GarbageCan_1",
+        "x": 385,
+        "y": 347,
+        "width": 73,
+        "height": 60,
+        "isClicked": false
+    },
+    {
+        "id": 3,
+        "label": "HandTowel_1",
+        "x": 649,
+        "y": 253,
+        "width": 12,
+        "height": 41,
+        "isClicked": false
+    },
+    {
+        "id": 4,
+        "label": "LightSwitch_1",
+        "x": 404,
+        "y": 258,
+        "width": 12,
+        "height": 10,
+        "isClicked": false
+    },
+    {
+        "id": 5,
+        "label": "Plunger_1",
+        "x": 752,
+        "y": 427,
+        "width": 4,
+        "height": 24,
+        "isClicked": false
+    },
+    {
+        "id": 6,
+        "label": "ScrubBrush_1",
+        "x": 705,
+        "y": 406,
+        "width": 5,
+        "height": 34,
+        "isClicked": false
+    },
+    {
+        "id": 7,
+        "label": "SoapBottle_1",
+        "x": 545,
+        "y": 275,
+        "width": 15,
+        "height": 28,
+        "isClicked": false
+    }
+]

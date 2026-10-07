@@ -1,0 +1,92 @@
+[
+    {
+        "id": 1,
+        "label": "AlarmClock_1",
+        "x": 600,
+        "y": 324,
+        "width": 24,
+        "height": 25,
+        "isClicked": false
+    },
+    {
+        "id": 2,
+        "label": "BaseballBat_1",
+        "x": 803,
+        "y": 331,
+        "width": 67,
+        "height": 126,
+        "isClicked": false
+    },
+    {
+        "id": 3,
+        "label": "Book_1",
+        "x": 239,
+        "y": 360,
+        "width": 73,
+        "height": 27,
+        "isClicked": false
+    },
+    {
+        "id": 4,
+        "label": "CellPhone_1",
+        "x": 210,
+        "y": 383,
+        "width": 24,
+        "height": 17,
+        "isClicked": false
+    },
+    {
+        "id": 5,
+        "label": "DeskLamp_1",
+        "x": 646,
+        "y": 306,
+        "width": 25,
+        "height": 41,
+        "isClicked": false
+    },
+    {
+        "id": 6,
+        "label": "Laptop_1",
+        "x": 719,
+        "y": 324,
+        "width": 77,
+        "height": 58,
+        "isClicked": false
+    },
+    {
+        "id": 7,
+        "label": "Mug_1",
+        "x": 652,
+        "y": 340,
+        "width": 15,
+        "height": 15,
+        "isClicked": false
+    },
+    {
+        "id": 8,
+        "label": "Pillow_1",
+        "x": 508,
+        "y": 333,
+        "width": 59,
+        "height": 26,
+        "isClicked": false
+    },
+    {
+        "id": 9,
+        "label": "Poster_1",
+        "x": 299,
+        "y": 183,
+        "width": 47,
+        "height": 126,
+        "isClicked": false
+    },
+    {
+        "id": 10,
+        "label": "Vase_1",
+        "x": 0,
+        "y": 420,
+        "width": 10,
+        "height": 14,
+        "isClicked": false
+    }
+]

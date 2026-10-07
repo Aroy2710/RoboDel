@@ -19,15 +19,6 @@
     },
     {
         "id": 3,
-        "label": "HandTowelHolder_1",
-        "x": 567,
-        "y": 207,
-        "width": 26,
-        "height": 26,
-        "isClicked": false
-    },
-    {
-        "id": 4,
         "label": "Mirror_1",
         "x": 321,
         "y": 177,
@@ -36,7 +27,7 @@
         "isClicked": false
     },
     {
-        "id": 5,
+        "id": 4,
         "label": "SoapBar_1",
         "x": 395,
         "y": 317,
@@ -45,7 +36,7 @@
         "isClicked": false
     },
     {
-        "id": 6,
+        "id": 5,
         "label": "SoapBottle_1",
         "x": 424,
         "y": 290,
@@ -54,30 +45,12 @@
         "isClicked": false
     },
     {
-        "id": 7,
+        "id": 6,
         "label": "Towel_1",
         "x": 646,
         "y": 286,
         "width": 79,
         "height": 95,
-        "isClicked": false
-    },
-    {
-        "id": 8,
-        "label": "TowelHolder_1",
-        "x": 628,
-        "y": 284,
-        "width": 123,
-        "height": 9,
-        "isClicked": false
-    },
-    {
-        "id": 9,
-        "label": "TowelHolder_2",
-        "x": 805,
-        "y": 300,
-        "width": 218,
-        "height": 49,
         "isClicked": false
     }
 ]

@@ -1,0 +1,92 @@
+[
+    {
+        "id": 1,
+        "label": "AlarmClock_1",
+        "x": 425,
+        "y": 209,
+        "width": 20,
+        "height": 26,
+        "isClicked": false
+    },
+    {
+        "id": 2,
+        "label": "BasketBall_1",
+        "x": 164,
+        "y": 478,
+        "width": 71,
+        "height": 61,
+        "isClicked": false
+    },
+    {
+        "id": 3,
+        "label": "Book_1",
+        "x": 607,
+        "y": 314,
+        "width": 77,
+        "height": 37,
+        "isClicked": false
+    },
+    {
+        "id": 4,
+        "label": "Boots_1",
+        "x": 341,
+        "y": 307,
+        "width": 37,
+        "height": 60,
+        "isClicked": false
+    },
+    {
+        "id": 5,
+        "label": "CellPhone_1",
+        "x": 547,
+        "y": 377,
+        "width": 30,
+        "height": 15,
+        "isClicked": false
+    },
+    {
+        "id": 6,
+        "label": "DeskLamp_1",
+        "x": 360,
+        "y": 195,
+        "width": 32,
+        "height": 40,
+        "isClicked": false
+    },
+    {
+        "id": 7,
+        "label": "DogBed_1",
+        "x": 71,
+        "y": 546,
+        "width": 164,
+        "height": 29,
+        "isClicked": false
+    },
+    {
+        "id": 8,
+        "label": "Laptop_1",
+        "x": 490,
+        "y": 308,
+        "width": 66,
+        "height": 66,
+        "isClicked": false
+    },
+    {
+        "id": 9,
+        "label": "Pillow_1",
+        "x": 679,
+        "y": 325,
+        "width": 111,
+        "height": 50,
+        "isClicked": false
+    },
+    {
+        "id": 10,
+        "label": "Statue_1",
+        "x": 388,
+        "y": 210,
+        "width": 33,
+        "height": 24,
+        "isClicked": false
+    }
+]

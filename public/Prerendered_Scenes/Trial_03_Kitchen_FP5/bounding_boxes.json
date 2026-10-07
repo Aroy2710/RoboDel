@@ -1,0 +1,92 @@
+[
+    {
+        "id": 1,
+        "label": "Bowl_1",
+        "x": 752,
+        "y": 359,
+        "width": 47,
+        "height": 21,
+        "isClicked": false
+    },
+    {
+        "id": 2,
+        "label": "Bread_1",
+        "x": 578,
+        "y": 359,
+        "width": 45,
+        "height": 22,
+        "isClicked": false
+    },
+    {
+        "id": 3,
+        "label": "Cup_1",
+        "x": 172,
+        "y": 478,
+        "width": 33,
+        "height": 29,
+        "isClicked": false
+    },
+    {
+        "id": 4,
+        "label": "HousePlant_1",
+        "x": 665,
+        "y": 275,
+        "width": 69,
+        "height": 75,
+        "isClicked": false
+    },
+    {
+        "id": 5,
+        "label": "Kettle_1",
+        "x": 333,
+        "y": 356,
+        "width": 29,
+        "height": 27,
+        "isClicked": false
+    },
+    {
+        "id": 6,
+        "label": "Lettuce_1",
+        "x": 255,
+        "y": 431,
+        "width": 38,
+        "height": 29,
+        "isClicked": false
+    },
+    {
+        "id": 7,
+        "label": "Mug_1",
+        "x": 936,
+        "y": 403,
+        "width": 60,
+        "height": 46,
+        "isClicked": false
+    },
+    {
+        "id": 8,
+        "label": "PaperTowelRoll_1",
+        "x": 315,
+        "y": 378,
+        "width": 25,
+        "height": 13,
+        "isClicked": false
+    },
+    {
+        "id": 9,
+        "label": "Pot_1",
+        "x": 642,
+        "y": 358,
+        "width": 41,
+        "height": 29,
+        "isClicked": false
+    },
+    {
+        "id": 10,
+        "label": "Tomato_1",
+        "x": 401,
+        "y": 362,
+        "width": 17,
+        "height": 15,
+        "isClicked": false
+    }
+]

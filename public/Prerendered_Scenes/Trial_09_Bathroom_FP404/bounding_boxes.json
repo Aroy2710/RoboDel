@@ -1,0 +1,92 @@
+[
+    {
+        "id": 1,
+        "label": "Candle_1",
+        "x": 242,
+        "y": 242,
+        "width": 15,
+        "height": 25,
+        "isClicked": false
+    },
+    {
+        "id": 2,
+        "label": "Cloth_1",
+        "x": 260,
+        "y": 393,
+        "width": 37,
+        "height": 27,
+        "isClicked": false
+    },
+    {
+        "id": 3,
+        "label": "GarbageCan_1",
+        "x": 787,
+        "y": 341,
+        "width": 137,
+        "height": 136,
+        "isClicked": false
+    },
+    {
+        "id": 4,
+        "label": "HandTowel_1",
+        "x": 709,
+        "y": 182,
+        "width": 33,
+        "height": 55,
+        "isClicked": false
+    },
+    {
+        "id": 5,
+        "label": "Plunger_1",
+        "x": 642,
+        "y": 300,
+        "width": 19,
+        "height": 56,
+        "isClicked": false
+    },
+    {
+        "id": 6,
+        "label": "ScrubBrush_1",
+        "x": 666,
+        "y": 314,
+        "width": 20,
+        "height": 48,
+        "isClicked": false
+    },
+    {
+        "id": 7,
+        "label": "SoapBar_1",
+        "x": 253,
+        "y": 494,
+        "width": 29,
+        "height": 25,
+        "isClicked": false
+    },
+    {
+        "id": 8,
+        "label": "SprayBottle_1",
+        "x": 277,
+        "y": 352,
+        "width": 15,
+        "height": 38,
+        "isClicked": false
+    },
+    {
+        "id": 9,
+        "label": "TissueBox_1",
+        "x": 254,
+        "y": 445,
+        "width": 36,
+        "height": 54,
+        "isClicked": false
+    },
+    {
+        "id": 10,
+        "label": "Towel_1",
+        "x": 520,
+        "y": 173,
+        "width": 9,
+        "height": 49,
+        "isClicked": false
+    }
+]

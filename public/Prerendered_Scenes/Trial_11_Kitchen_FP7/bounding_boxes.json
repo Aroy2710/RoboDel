@@ -1,0 +1,92 @@
+[
+    {
+        "id": 1,
+        "label": "Apple_1",
+        "x": 233,
+        "y": 443,
+        "width": 42,
+        "height": 33,
+        "isClicked": false
+    },
+    {
+        "id": 2,
+        "label": "Book_1",
+        "x": 335,
+        "y": 373,
+        "width": 41,
+        "height": 9,
+        "isClicked": false
+    },
+    {
+        "id": 3,
+        "label": "Bread_1",
+        "x": 436,
+        "y": 369,
+        "width": 36,
+        "height": 26,
+        "isClicked": false
+    },
+    {
+        "id": 4,
+        "label": "CoffeeMachine_1",
+        "x": 225,
+        "y": 339,
+        "width": 123,
+        "height": 94,
+        "isClicked": false
+    },
+    {
+        "id": 5,
+        "label": "Cup_1",
+        "x": 551,
+        "y": 360,
+        "width": 11,
+        "height": 11,
+        "isClicked": false
+    },
+    {
+        "id": 6,
+        "label": "GarbageCan_1",
+        "x": 945,
+        "y": 479,
+        "width": 78,
+        "height": 96,
+        "isClicked": false
+    },
+    {
+        "id": 7,
+        "label": "HousePlant_1",
+        "x": 795,
+        "y": 317,
+        "width": 52,
+        "height": 46,
+        "isClicked": false
+    },
+    {
+        "id": 8,
+        "label": "Kettle_1",
+        "x": 185,
+        "y": 408,
+        "width": 64,
+        "height": 52,
+        "isClicked": false
+    },
+    {
+        "id": 9,
+        "label": "Lettuce_1",
+        "x": 413,
+        "y": 370,
+        "width": 25,
+        "height": 18,
+        "isClicked": false
+    },
+    {
+        "id": 10,
+        "label": "Pot_1",
+        "x": 528,
+        "y": 364,
+        "width": 35,
+        "height": 29,
+        "isClicked": false
+    }
+]

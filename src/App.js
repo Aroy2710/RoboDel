@@ -16,11 +16,16 @@ const PHASES = {
 
 const TRIAL_SEQUENCE = [
   "Trial_01_LivingRoom_FP205",
-  "Trial_02_BathRoom_FP403"
+  "Trial_02_BathRoom_FP403",
+  "Trial_03_Kitchen_FP5",
+  "Trial_04_Kitchen_FP6"
 ];
 
 const TARGET_SEQUENCE = [
   "Pan",
+  "Pan",
+  "Pan",
+  "Pan"
 ];
 
 function App() {
@@ -36,7 +41,8 @@ function App() {
   const [phase, setPhase] = useState(PHASES.ID_ENTRY);
   const [isProcessing, setIsProcessing] = useState(false);
 
-  const [displayImage, setDisplayImage] = useState(observationImage);
+  // Initialize right render panel to interactiveBaseImage (int.jpg)
+  const [displayImage, setDisplayImage] = useState(interactiveBaseImage);
   const workingImageRef = useRef(null);
   
   const canvasRef = useRef(null);
@@ -53,7 +59,8 @@ function App() {
   const [naturalDims, setNaturalDims] = useState(null);
 
   useEffect(() => {
-    setDisplayImage(observationImage);
+    // Reset display render to match int.jpg at the start of each trial
+    setDisplayImage(interactiveBaseImage);
     setRemovedObjects([]);
     setRemovedLabels([]);
     setPhase(currentTrialIndex === 0 ? PHASES.ID_ENTRY : PHASES.TARGET_PROMPT); 
@@ -151,13 +158,17 @@ function App() {
       saliconLUTRef.current = lut;
     };
     ref.src = observationImage; 
-  }, [currentTrialIndex, observationImage]);
+  }, [currentTrialIndex, observationImage, interactiveBaseImage]);
 
   useEffect(() => {
     if (currentTrialIndex >= TRIAL_SEQUENCE.length) return;
     fetch(`/Prerendered_Scenes/${activeFolder}/bounding_boxes.json`)
       .then(response => response.json())
-      .then(data => setBoundingBoxes(data))
+      .then(data => {
+        // Ensure fresh click states upon loading new trial
+        const resetData = data.map(box => ({ ...box, isClicked: false }));
+        setBoundingBoxes(resetData);
+      })
       .catch(error => console.error(`Failed to load bounding boxes for ${activeFolder}:`, error));
   }, [activeFolder, currentTrialIndex]);
 
@@ -257,7 +268,7 @@ function App() {
       };
 
       canvas.addEventListener('mousemove', handleMouseMove);
-      window.addEventListener('mousedown', handleMouseDown);
+      window.addEventListener('mousedown', handleMouseDown); 
       
       const telemetryIntervalId = setInterval(() => {
         const { x, y } = currentMouseRef.current;
@@ -321,7 +332,7 @@ function App() {
 
     const sortedLabels = [...newRemovedLabels].sort();
     
-    // Updated default fall-back image to int.jpg
+    // Fall back to int.jpg when 0 objects are selected
     const filename = sortedLabels.length === 0 
       ? "int.jpg" 
       : `removed_${sortedLabels.join('_')}.jpg`;
@@ -471,7 +482,11 @@ function App() {
                       <div
                         key={box.id}
                         style={{
-                          position: 'absolute', left: `${leftPercent}%`, top: `${topPercent}%`, width: `${widthPercent}%`, height: `${heightPercent}%`,
+                          position: 'absolute', 
+                          left: `${leftPercent}%`, 
+                          top: `${topPercent}%`, 
+                          width: `${widthPercent}%`, 
+                          height: `${heightPercent}%`,
                           border: `2px solid ${box.isClicked ? '#ef4444' : '#22c55e'}`,
                           backgroundColor: box.isClicked ? 'rgba(239, 68, 68, 0.25)' : 'rgba(34, 197, 94, 0.15)',
                           pointerEvents: 'none'

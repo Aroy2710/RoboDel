@@ -1,79 +1,44 @@
 import os
 import sys
 import io
+import re
 import base64
-import argparse
 from contextlib import asynccontextmanager
 from fastapi import FastAPI, Query
 from fastapi.responses import HTMLResponse, JSONResponse
 import uvicorn
 from PIL import Image
 
-parser = argparse.ArgumentParser(description="AI2-THOR & ProcTHOR Web Explorer")
-parser.add_argument("--dataset-type", choices=["ithor", "procthor"], default="ithor",
-                    help="Choose between standard iTHOR scenes or ProcTHOR procedural houses")
-parser.add_argument("scene", nargs="?", default="FloorPlan1", 
-                    help="The iTHOR floor plan to load (e.g., FloorPlan1, FloorPlan201, FloorPlan401)")
-parser.add_argument("--procthor-house-id", type=int, default=0,
-                    help="Integer house index from procthor-10k dataset when using --dataset-type procthor")
-parser.add_argument("--procthor-split", default="train", choices=["train", "val", "test"],
-                    help="Dataset split to sample ProcTHOR houses from")
-parser.add_argument("--scene-path", default=None,
-                    help="Direct path to custom ProcTHOR JSON layout file")
-parser.add_argument("--port", type=int, default=8001, help="Port to run the FastAPI server on")
-
-args = parser.parse_args()
-DATASET_TYPE = args.dataset_type
-TARGET_SCENE = args.scene
-PROCTHOR_HOUSE_ID = args.procthor_house_id
-PROCTHOR_SPLIT = args.procthor_split
-SCENE_PATH = args.scene_path
-
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from thor3d import ThorRenderer
+
+DEFAULT_PORT = 8001
+CURRENT_SCENE = "FloorPlan1"
+DATASET_TYPE = "ithor"
 
 renderer_instance = None
 r = None
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    global renderer_instance, r, TARGET_SCENE
+    global renderer_instance, r, CURRENT_SCENE, DATASET_TYPE
     
     renderer_instance = ThorRenderer(width=800, height=600, gpu_device=1, quality="Medium")
     r = renderer_instance.__enter__()
     
-    if DATASET_TYPE == "ithor":
-        print(f"Initializing iTHOR scene: {TARGET_SCENE}")
-        r.controller.reset(scene=TARGET_SCENE, snapToGrid=False, autoSimulation=False)
-    else:
-        if SCENE_PATH and os.path.exists(SCENE_PATH):
-            import json
-            print(f"Loading custom ProcTHOR layout from {SCENE_PATH}...")
-            with open(SCENE_PATH, "r") as f:
-                house = json.load(f)
-        else:
-            try:
-                import prior
-            except ImportError:
-                print("\nError: The 'prior' package is required to load ProcTHOR houses. Run: pip install prior\n")
-                sys.exit(1)
-            print(f"Loading ProcTHOR-10k ({PROCTHOR_SPLIT} split, House ID: {PROCTHOR_HOUSE_ID})...")
-            dataset = prior.load_dataset("procthor-10k")
-            house = dataset[PROCTHOR_SPLIT][PROCTHOR_HOUSE_ID]
-        
-        r.controller.reset(scene="Procedural", snapToGrid=False, autoSimulation=False)
-        r.controller.step(action="CreateHouse", house=house)
-        print("ProcTHOR house created successfully.")
-    
+    print(f"Initializing iTHOR scene: {CURRENT_SCENE}")
+    r.controller.reset(scene=CURRENT_SCENE, snapToGrid=False, autoSimulation=False)
     r.controller.step(action="PausePhysicsAutoSim")
+    
     yield
+    
     if renderer_instance:
         renderer_instance.__exit__(None, None, None)
 
 app = FastAPI(lifespan=lifespan)
 
 def get_state_response(scene_title=None):
-    global TARGET_SCENE
+    global CURRENT_SCENE, DATASET_TYPE
     event = r.controller.last_event
     agent = event.metadata['agent']
     
@@ -82,10 +47,8 @@ def get_state_response(scene_title=None):
     img.save(buffered, format="JPEG", quality=75)
     img_str = base64.b64encode(buffered.getvalue()).decode()
     
-    current_title = (
-        f"iTHOR: {TARGET_SCENE}" 
-        if DATASET_TYPE == "ithor" 
-        else f"ProcTHOR: House #{PROCTHOR_HOUSE_ID} ({PROCTHOR_SPLIT})"
+    title = scene_title or (
+        f"iTHOR: {CURRENT_SCENE}" if DATASET_TYPE == "ithor" else f"ProcTHOR: House {CURRENT_SCENE}"
     )
     
     return {
@@ -95,25 +58,49 @@ def get_state_response(scene_title=None):
         "z": round(agent['position']['z'], 4),
         "rotation": round(agent['rotation']['y'], 4),
         "horizon": round(agent['cameraHorizon'], 4),
-        "sceneTitle": scene_title or current_title
+        "sceneTitle": title
     }
 
 @app.get("/switch_scene")
 def switch_scene(scene_name: str = Query(...)):
-    global r, TARGET_SCENE, DATASET_TYPE
-    clean_scene = scene_name.strip()
-    if not clean_scene:
-        return JSONResponse({"error": "Empty scene name provided"}, status_code=400)
-    
+    global r, CURRENT_SCENE, DATASET_TYPE
+    query = scene_name.strip()
+    if not query:
+        return JSONResponse({"error": "Empty scene identifier"}, status_code=400)
+
     try:
-        print(f"Switching scene to: {clean_scene}...")
-        r.controller.reset(scene=clean_scene, snapToGrid=False, autoSimulation=False)
-        r.controller.step(action="PausePhysicsAutoSim")
-        TARGET_SCENE = clean_scene
-        DATASET_TYPE = "ithor"
-        return get_state_response(scene_title=f"iTHOR: {clean_scene}")
+        # Check if user entered an integer ID or "procthor:<id>"
+        is_numeric = query.isdigit() or (query.lower().startswith("house") and query.split()[-1].isdigit())
+        
+        if is_numeric or query.lower().startswith("procthor"):
+            import prior
+            digits = re.findall(r'\d+', query)
+            house_id = int(digits[0]) if digits else 0
+            
+            print(f"Loading ProcTHOR-10k train split, House ID: {house_id}...")
+            dataset = prior.load_dataset("procthor-10k")
+            house = dataset["train"][house_id]
+            
+            r.controller.reset(scene="Procedural", snapToGrid=False, autoSimulation=False)
+            r.controller.step(action="CreateHouse", house=house)
+            r.controller.step(action="PausePhysicsAutoSim")
+            
+            CURRENT_SCENE = str(house_id)
+            DATASET_TYPE = "procthor"
+            return get_state_response(scene_title=f"ProcTHOR: House #{house_id} (train)")
+
+        else:
+            # Standard iTHOR scene string (e.g., FloorPlan202)
+            print(f"Loading iTHOR Scene: {query}...")
+            r.controller.reset(scene=query, snapToGrid=False, autoSimulation=False)
+            r.controller.step(action="PausePhysicsAutoSim")
+            
+            CURRENT_SCENE = query
+            DATASET_TYPE = "ithor"
+            return get_state_response(scene_title=f"iTHOR: {query}")
+
     except Exception as e:
-        print(f"Failed to switch to scene {clean_scene}: {e}")
+        print(f"Failed to load scene {query}: {e}")
         return JSONResponse({"error": str(e)}, status_code=500)
 
 @app.get("/step")
@@ -148,17 +135,11 @@ def look(yaw: float = 0.0, pitch: float = 0.0):
 
 @app.get("/", response_class=HTMLResponse)
 def index():
-    display_title = (
-        f"iTHOR: {TARGET_SCENE}" 
-        if DATASET_TYPE == "ithor" 
-        else f"ProcTHOR: House #{PROCTHOR_HOUSE_ID} ({PROCTHOR_SPLIT})"
-    )
-    
     return f"""
     <!DOCTYPE html>
     <html>
     <head>
-        <title>AI2-THOR Continuous Web Explorer</title>
+        <title>AI2-THOR Interactive Live Explorer</title>
         <style>
             body {{
                 background: #181818;
@@ -170,10 +151,10 @@ def index():
             }}
             .scene-bar {{
                 background: #252525;
-                padding: 10px 16px;
+                padding: 10px 18px;
                 border-radius: 8px;
                 display: inline-flex;
-                gap: 8px;
+                gap: 10px;
                 align-items: center;
                 margin-bottom: 12px;
                 border: 1px solid #3a3a3a;
@@ -182,18 +163,18 @@ def index():
                 background: #121212;
                 border: 1px solid #4CAF50;
                 color: #fff;
-                padding: 6px 12px;
+                padding: 7px 12px;
                 border-radius: 4px;
                 font-size: 15px;
                 font-family: monospace;
-                width: 170px;
+                width: 220px;
                 text-align: center;
             }}
             .scene-btn {{
                 background: #4CAF50;
                 color: #fff;
                 border: none;
-                padding: 7px 15px;
+                padding: 8px 16px;
                 border-radius: 4px;
                 font-size: 14px;
                 cursor: pointer;
@@ -220,7 +201,7 @@ def index():
                 top: 15px;
                 left: 50%;
                 transform: translateX(-50%);
-                background: rgba(0,0,0,0.7);
+                background: rgba(0,0,0,0.75);
                 padding: 6px 14px;
                 border-radius: 20px;
                 font-size: 13px;
@@ -228,7 +209,7 @@ def index():
                 transition: opacity 0.2s;
             }}
             .telemetry-bar {{
-                margin-top: 15px;
+                margin-top: 14px;
                 font-size: 16px;
                 background: #252525;
                 display: inline-block;
@@ -241,11 +222,11 @@ def index():
         </style>
     </head>
     <body>
-        <h2 style="margin: 6px 0 12px 0;">AI2-THOR Live Explorer: <span id="sceneTitle" style="color:#FF9800;">{display_title}</span></h2>
+        <h2 style="margin: 4px 0 12px 0;">AI2-THOR Live Explorer: <span id="sceneTitle" style="color:#FF9800;">iTHOR: FloorPlan1</span></h2>
         
         <div class="scene-bar">
-            <label for="sceneInput" style="font-size: 14px; color: #bbb;"><b>Switch Floor Plan:</b></label>
-            <input id="sceneInput" class="scene-input" type="text" placeholder="e.g. FloorPlan202" value="{TARGET_SCENE}" />
+            <label for="sceneInput" style="font-size: 14px; color: #bbb;"><b>Environment:</b></label>
+            <input id="sceneInput" class="scene-input" type="text" placeholder="e.g. FloorPlan202 or 12" value="FloorPlan1" />
             <button class="scene-btn" onclick="requestSceneSwitch()">Load Scene</button>
         </div>
         
@@ -401,4 +382,4 @@ def index():
     """
 
 if __name__ == "__main__":
-    uvicorn.run(app, host="0.0.0.0", port=args.port)
+    uvicorn.run(app, host="0.0.0.0", port=DEFAULT_PORT)

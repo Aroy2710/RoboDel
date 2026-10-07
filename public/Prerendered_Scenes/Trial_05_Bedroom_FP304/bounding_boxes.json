@@ -1,0 +1,101 @@
+[
+    {
+        "id": 1,
+        "label": "AlarmClock_1",
+        "x": 600,
+        "y": 223,
+        "width": 26,
+        "height": 28,
+        "isClicked": false
+    },
+    {
+        "id": 2,
+        "label": "Book_1",
+        "x": 689,
+        "y": 330,
+        "width": 42,
+        "height": 11,
+        "isClicked": false
+    },
+    {
+        "id": 3,
+        "label": "Bowl_1",
+        "x": 686,
+        "y": 242,
+        "width": 33,
+        "height": 8,
+        "isClicked": false
+    },
+    {
+        "id": 4,
+        "label": "Box_1",
+        "x": 174,
+        "y": 420,
+        "width": 128,
+        "height": 133,
+        "isClicked": false
+    },
+    {
+        "id": 5,
+        "label": "CellPhone_1",
+        "x": 648,
+        "y": 344,
+        "width": 37,
+        "height": 6,
+        "isClicked": false
+    },
+    {
+        "id": 6,
+        "label": "Chair_1",
+        "x": 597,
+        "y": 348,
+        "width": 120,
+        "height": 204,
+        "isClicked": false
+    },
+    {
+        "id": 7,
+        "label": "Chair_2",
+        "x": 326,
+        "y": 313,
+        "width": 121,
+        "height": 218,
+        "isClicked": false
+    },
+    {
+        "id": 8,
+        "label": "DeskLamp_1",
+        "x": 563,
+        "y": 193,
+        "width": 40,
+        "height": 58,
+        "isClicked": false
+    },
+    {
+        "id": 9,
+        "label": "GarbageCan_1",
+        "x": 513,
+        "y": 392,
+        "width": 43,
+        "height": 88,
+        "isClicked": false
+    },
+    {
+        "id": 10,
+        "label": "Laptop_1",
+        "x": 582,
+        "y": 290,
+        "width": 59,
+        "height": 55,
+        "isClicked": false
+    },
+    {
+        "id": 11,
+        "label": "Mug_1",
+        "x": 640,
+        "y": 314,
+        "width": 19,
+        "height": 16,
+        "isClicked": false
+    }
+]
