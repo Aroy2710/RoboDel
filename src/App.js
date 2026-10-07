@@ -37,10 +37,22 @@ const TRIAL_SEQUENCE = [
 ];
 
 const TARGET_SEQUENCE = [
-  "Pan", "Pan", "Pan", "Pan",
-  "Pan", "Pan", "Pan", "Pan",
-  "Pan", "Pan", "Pan", "Pan",
-  "Pan", "Pan", "Pan", "Pan"
+  "Laptop",
+  "SoapBar",
+  "Kettle",
+  "Apple",
+  "Chair",
+  "DishSponge",
+  "Painting",
+  "Book",
+  "Plunger",
+  "GarbageCan",
+  "Bread",
+  "Newspaper",
+  "Vase",
+  "Box",
+  "CoffeeMachine",
+  "AlarmClock"
 ];
 
 function App() {
@@ -472,7 +484,7 @@ function App() {
       {/* 1. PARTICIPANT ID ENTRY */}
       {phase === PHASES.ID_ENTRY && (
         <div className="centered-view" style={{ textAlign: 'center', fontFamily: 'sans-serif', color: 'white' }}>
-          <h2 style={{ fontSize: '36px', marginBottom: '35px' }}>Visual Search Experiment</h2>
+          <h2 style={{ fontSize: '36px', marginBottom: '35px' }}>Enter your ID</h2>
           <div style={{ marginBottom: '30px' }}>
             <label style={{ fontSize: '20px', fontWeight: 'bold', marginRight: '15px' }}>
               Participant ID:
@@ -481,7 +493,7 @@ function App() {
               type="text" 
               value={participantId} 
               onChange={(e) => setParticipantId(e.target.value)} 
-              placeholder="e.g. P_001"
+              placeholder="e.g. 1"
               style={{ padding: '12px 18px', fontSize: '20px', borderRadius: '6px', border: 'none', outline: 'none', color: 'black' }}
             />
           </div>
@@ -643,17 +655,14 @@ function App() {
           <p style={{ color: '#9ca3af', fontSize: '14px', lineHeight: '1.5' }}>
             Participant: <b>{participantId}</b> | Completed: <b>{Math.min(currentTrialIndex + 1, TRIAL_SEQUENCE.length)} of {TRIAL_SEQUENCE.length}</b> trials.
             <br />
-            Please complete this short pilot survey below, or you may alternatively open our 
-            <a href={GOOGLE_FORM_URL} target="_blank" rel="noopener noreferrer" style={{ color: '#38bdf8', marginLeft: '6px' }}>
-              Google Form here
-            </a>.
+            Please complete this short pilot survey below
           </p>
 
           <form onSubmit={handleSurveySubmit} style={{ display: 'flex', flexDirection: 'column', gap: '22px', marginTop: '20px' }}>
             {/* Question 1 */}
             <div>
               <label style={{ fontWeight: 'bold', display: 'block', marginBottom: '8px' }}>
-                1. How easy was the test to use?
+                1. How easy was the application to use?
               </label>
               <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
                 <span style={{ fontSize: '13px', color: '#9ca3af' }}>Very Confusing (1)</span>
