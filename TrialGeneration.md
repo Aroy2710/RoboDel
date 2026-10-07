@@ -372,7 +372,7 @@ python scripts/batch_pregenerate.py \
   --random-obs
 ```
 
-Objects not included in Observation Phase : Mirror , SoapBottle , Towel , Towel Holder 
+Objects not included in Observation Phase : CreditCard , FloorLamp , Newspaper 
 
 
 ## Trial 13
@@ -410,7 +410,7 @@ python scripts/batch_pregenerate.py \
   --x -2.222 --y 0.9071 --z 4.8928 --rotY 110.9997 --horizon 4.5002 \
   --list-objects
 ```
-Objecs not included in Observation Phase : DeskLamp , GarbageCan , Laptop , WateringCan
+Objecs not included in Observation Phase : Mug , Pillow , Vase
 
 ```bash
 python scripts/batch_pregenerate.py \
@@ -418,11 +418,11 @@ python scripts/batch_pregenerate.py \
   --scene FloorPlan203 \
   --trial Trial_14_LivingRoom_FP203 \
   --x -2.222 --y 0.9071 --z 4.8928 --rotY 110.9997 --horizon 4.5002 \
-  --targets GarBageCan HandTowel Towel SoapBar SoapBottle TowelHolder HandTowelHolder Mirror \
+  --targets Laptop HousePlant Painting Box FloorLamp Newspaper Ottoman Pillow Television RemoteControl\
   --random-obs
 ```
 
-Objects not included in Observation Phase : Mirror , SoapBottle , Towel , Towel Holder 
+Objects not included in Observation Phase : Box , HousePlant , Newspaper , Painting , Pillow 
 
 ## Trial 15
 
@@ -434,19 +434,19 @@ python scripts/batch_pregenerate.py \
   --x -0.9018 --y 0.901 --z -0.0471 --rotY 119.9999 --horizon 11.5002 \
   --list-objects
 ```
-Objecs not included in Observation Phase : DeskLamp , GarbageCan , Laptop , WateringCan
+
 
 ```bash
 python scripts/batch_pregenerate.py \
   --dataset-type ithor \
   --scene FloorPlan8 \
   --trial Trial_15_Kitchen_FP8 \
-  --x -0.2276 --y 0.9094 --z 1.457 --rotY 346.4998 --horizon 6.5003 \
-  --targets GarBageCan HandTowel Towel SoapBar SoapBottle TowelHolder HandTowelHolder Mirror \
+  --x -0.9018 --y 0.901 --z -0.0471 --rotY 119.9999 --horizon 11.5002 \
+  --targets Apple Bowl Bread Bottle CoffeeMachine GarbageCan HousePlant Kettle SoapBottle Cup\
   --random-obs
 ```
 
-Objects not included in Observation Phase : Mirror , SoapBottle , Towel , Towel Holder 
+Objects not included in Observation Phase : Bottle,  Bowl , Cup , GarbageCan
 
 ## Trial 16
 
@@ -458,16 +458,16 @@ python scripts/batch_pregenerate.py \
   --x -0.1382 --y 0.901 --z 0.4646 --rotY 178.25 --horizon 19.0001 \
   --list-objects
 ```
-Objecs not included in Observation Phase : DeskLamp , GarbageCan , Laptop , WateringCan
+
 
 ```bash
 python scripts/batch_pregenerate.py \
   --dataset-type ithor \
   --scene FloorPlan302 \
-  --trial Trial_16_Kitchen_FP302 \
+  --trial Trial_16_Bedroom_FP302 \
   --x -0.1382 --y 0.901 --z 0.4646 --rotY 178.25 --horizon 19.0001 \
-  --targets GarBageCan HandTowel Towel SoapBar SoapBottle TowelHolder HandTowelHolder Mirror \
+  --targets AlarmClock Book Bowl CellPhone HousePlant Laptop Painting Pillow TeddyBear CreditCard\
   --random-obs
 ```
 
-Objects not included in Observation Phase : Mirror , SoapBottle , Towel , Towel Holder 
+Objects not included in Observation Phase : CreditCard ,  HousePlant , Book
