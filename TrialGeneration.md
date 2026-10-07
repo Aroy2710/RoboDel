@@ -105,7 +105,7 @@ python scripts/batch_pregenerate.py \
   --targets Laptop Statue Television WateringCan GarbageCan Painting Box DeskLamp FloorLamp HousePlant \
   --random-obs
 ```
-
+Objects not included in Observation Phase:  GarbageCan , Laptop , Painting , WateringCan
 ## Trial 2
 
 
@@ -116,7 +116,7 @@ python scripts/batch_pregenerate.py \
   --x -0.2276 --y 0.9094 --z 1.457 --rotY 346.4998 --horizon 6.5003 \
   --list-objects
 ```
-Objecs not included in Observation Phase : DeskLamp , GarbageCan , Laptop , WateringCan
+
 
 ```bash
 python scripts/batch_pregenerate.py \
@@ -213,7 +213,7 @@ python scripts/batch_pregenerate.py \
   --x -1.3272 --y 0.9016 --z 0.7827 --rotY 292.9999 --horizon 8.5004 \
   --list-objects
 ```
-Objecs not included in Observation Phase : DeskLamp , GarbageCan , Laptop , WateringCan
+
 
 ```bash
 python scripts/batch_pregenerate.py \
@@ -285,7 +285,7 @@ python scripts/batch_pregenerate.py \
   --x -2.7978 --y 0.9032 --z 1.7009 --rotY 121.7499 --horizon 22.0001 \
   --list-objects
 ```
-Objecs not included in Observation Phase : DeskLamp , GarbageCan , Laptop , WateringCan
+
 
 ```bash
 python scripts/batch_pregenerate.py \
@@ -310,7 +310,7 @@ python scripts/batch_pregenerate.py \
   --x -1.7317 --y 0.9007 --z 2.173 --rotY 4.9999 --horizon 9.0002 \
   --list-objects
 ```
-Objecs not included in Observation Phase : DeskLamp , GarbageCan , Laptop , WateringCan
+
 
 ```bash
 python scripts/batch_pregenerate.py \
@@ -335,7 +335,7 @@ python scripts/batch_pregenerate.py \
   --x 0.5275 --y 0.901 --z -0.5127 --rotY 272.4999 --horizon -2 \
   --list-objects
 ```
-Objecs not included in Observation Phase : DeskLamp , GarbageCan , Laptop , WateringCan
+
 
 ```bash
 python scripts/batch_pregenerate.py \
@@ -360,7 +360,7 @@ python scripts/batch_pregenerate.py \
   --x -4.184 --y 0.9027 --z 1.3466 --rotY 90.75 --horizon 12 \
   --list-objects
 ```
-Objecs not included in Observation Phase : DeskLamp , GarbageCan , Laptop , WateringCan
+
 
 ```bash
 python scripts/batch_pregenerate.py \
@@ -385,7 +385,7 @@ python scripts/batch_pregenerate.py \
   --x 0.9332 --y 0.901 --z -0.5238 --rotY 236.7496 --horizon 10.2501 \
   --list-objects
 ```
-Objecs not included in Observation Phase : DeskLamp , GarbageCan , Laptop , WateringCan
+
 
 ```bash
 python scripts/batch_pregenerate.py \
@@ -410,7 +410,7 @@ python scripts/batch_pregenerate.py \
   --x -2.222 --y 0.9071 --z 4.8928 --rotY 110.9997 --horizon 4.5002 \
   --list-objects
 ```
-Objecs not included in Observation Phase : Mug , Pillow , Vase
+
 
 ```bash
 python scripts/batch_pregenerate.py \

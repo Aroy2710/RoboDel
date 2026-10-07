@@ -15,17 +15,41 @@ const PHASES = {
 };
 
 const TRIAL_SEQUENCE = [
-  "Trial_01_LivingRoom_FP205",
+"Trial_01_LivingRoom_FP205",
   "Trial_02_BathRoom_FP403",
   "Trial_03_Kitchen_FP5",
-  "Trial_04_Kitchen_FP6"
+  "Trial_04_Kitchen_FP6",
+  "Trial_05_Bedroom_FP304",
+  "Trial_06_Bathroom_FP401",
+  "Trial_07_LivingRoom_FP204",
+  "Trial_08_Bedroom_FP301",
+  "Trial_09_Bathroom_FP404",
+  "Trial_10_Bathroom_FP402",
+  "Trial_11_Kitchen_FP7",
+  "Trial_12_LivingRoom_FP201",
+  "Trial_13_Bedroom_FP303",
+  "Trial_14_LivingRoom_FP203",
+  "Trial_15_Kitchen_FP8",
+  "Trial_16_Bedroom_FP302"
 ];
 
 const TARGET_SEQUENCE = [
-  "Pan",
-  "Pan",
-  "Pan",
-  "Pan"
+  "Laptop",
+  "SoapBar",
+  "Kettle",
+  "Apple",
+  "Chair",
+  "DishSponge",
+  "Painting",
+  "Book",
+  "Plunger",
+  "GarbageCan",
+  "Bread",
+  "Newspaper",
+  "Vase",
+  "Box",
+  "CoffeeMachine",
+  "AlarmClock"
 ];
 
 function App() {
