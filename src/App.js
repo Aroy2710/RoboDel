@@ -2,8 +2,10 @@ import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 import './App.css';
 
-const API_URL = "https://multitude-resupply-apply.ngrok-free.dev ";
+// Bypass ngrok free-tier interstitial page on API calls
+axios.defaults.headers.common['ngrok-skip-browser-warning'] = 'true';
 
+const API_URL = "https://multitude-resupply-apply.ngrok-free.dev";
 
 const PHASES = {
   ID_ENTRY: -4,
@@ -67,7 +69,6 @@ function App() {
   const [phase, setPhase] = useState(PHASES.ID_ENTRY);
   const [isProcessing, setIsProcessing] = useState(false);
 
-  // Both viewports initialize to int.jpg
   const [displayImage, setDisplayImage] = useState(interactiveBaseImage);
   const workingImageRef = useRef(null);
   
@@ -87,7 +88,6 @@ function App() {
   const experimentStartTimeRef = useRef(null);
   const trialStartTimeRef = useRef(null);
 
-  // Survey state matching the 5 questions
   const [surveyData, setSurveyData] = useState({
     ease_of_use_score: 8,
     mouse_control_comfort: "Smooth and instant",
@@ -204,7 +204,7 @@ function App() {
       saliconLUTRef.current = lut;
     };
     ref.src = observationImage; 
-  }, [currentTrialIndex, observationImage, interactiveBaseImage]);
+  }, [currentTrialIndex, observationImage, interactiveBaseImage, phase]);
 
   useEffect(() => {
     if (currentTrialIndex >= TRIAL_SEQUENCE.length) return;
@@ -473,7 +473,7 @@ function App() {
       setTimeout(() => setPhase(PHASES.COMPLETED), 1200);
     } catch (err) {
       console.error("Error submitting survey feedback:", err);
-      alert("Error saving response to server. You can still complete via the direct link.");
+      alert("Error saving response to server.");
     } finally {
       setIsProcessing(false);
     }
@@ -526,7 +526,7 @@ function App() {
       {phase === PHASES.BLANK_SCREEN && <div className="fixation-screen" />}
       {phase === PHASES.FIXATION && <div className="fixation-screen"><div className="fixation-cross" /></div>}
 
-      {/* 3. OBSERVATION (FOVEATED BLUR) - Clean screen with zero overlays */}
+      {/* 3. OBSERVATION (FOVEATED BLUR) */}
       {phase === PHASES.OBSERVATION && (
         <div className="observable-screen" style={{ overflow: 'hidden', width: '100vw', height: '100vh', backgroundColor: 'black' }}>
           <canvas
@@ -659,7 +659,6 @@ function App() {
           </p>
 
           <form onSubmit={handleSurveySubmit} style={{ display: 'flex', flexDirection: 'column', gap: '22px', marginTop: '20px' }}>
-            {/* Question 1 */}
             <div>
               <label style={{ fontWeight: 'bold', display: 'block', marginBottom: '8px' }}>
                 1. How easy was the application to use?
@@ -679,7 +678,6 @@ function App() {
               </div>
             </div>
 
-            {/* Question 2 */}
             <div>
               <label style={{ fontWeight: 'bold', display: 'block', marginBottom: '6px' }}>
                 2. How well did the clear focus circle keep up with your mouse?
@@ -696,7 +694,6 @@ function App() {
               </select>
             </div>
 
-            {/* Question 3 */}
             <div>
               <label style={{ fontWeight: 'bold', display: 'block', marginBottom: '6px' }}>
                 3. Did searching with the blur effect cause any eye tiredness or discomfort?
@@ -713,7 +710,6 @@ function App() {
               </select>
             </div>
 
-            {/* Question 4 */}
             <div>
               <label style={{ fontWeight: 'bold', display: 'block', marginBottom: '6px' }}>
                 4. What could we improve to make this easier or more comfortable to use?
@@ -727,7 +723,6 @@ function App() {
               />
             </div>
 
-            {/* Question 5 */}
             <div>
               <label style={{ fontWeight: 'bold', display: 'block', marginBottom: '4px' }}>
                 5. Did anything seem broken or glitched during your session?
