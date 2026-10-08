@@ -46,6 +46,15 @@
     },
     {
         "id": 6,
+        "label": "Dumbbell_1",
+        "x": 811,
+        "y": 469,
+        "width": 57,
+        "height": 41,
+        "isClicked": false
+    },
+    {
+        "id": 7,
         "label": "Laptop_1",
         "x": 719,
         "y": 324,
@@ -54,7 +63,7 @@
         "isClicked": false
     },
     {
-        "id": 7,
+        "id": 8,
         "label": "Mug_1",
         "x": 652,
         "y": 340,
@@ -63,7 +72,7 @@
         "isClicked": false
     },
     {
-        "id": 8,
+        "id": 9,
         "label": "Pillow_1",
         "x": 508,
         "y": 333,
@@ -72,21 +81,12 @@
         "isClicked": false
     },
     {
-        "id": 9,
+        "id": 10,
         "label": "Poster_1",
         "x": 299,
         "y": 183,
         "width": 47,
         "height": 126,
-        "isClicked": false
-    },
-    {
-        "id": 10,
-        "label": "Vase_1",
-        "x": 0,
-        "y": 420,
-        "width": 10,
-        "height": 14,
         "isClicked": false
     }
 ]

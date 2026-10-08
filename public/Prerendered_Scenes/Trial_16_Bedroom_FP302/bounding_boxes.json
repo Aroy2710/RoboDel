@@ -37,11 +37,11 @@
     },
     {
         "id": 5,
-        "label": "CreditCard_1",
-        "x": 547,
-        "y": 291,
-        "width": 10,
-        "height": 1,
+        "label": "Chair_1",
+        "x": 558,
+        "y": 310,
+        "width": 73,
+        "height": 125,
         "isClicked": false
     },
     {

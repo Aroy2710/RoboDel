@@ -45,13 +45,13 @@ const TARGET_SEQUENCE = [
   "DishSponge",
   "Painting",
   "Book",
-  "Plunger",
+  "ToiletPaper",
   "GarbageCan",
   "Bread",
   "Newspaper",
-  "Vase",
+  "Dumbbell",
   "Box",
-  "CoffeeMachine",
+  "HousePlant",
   "AlarmClock"
 ];
 
@@ -589,7 +589,7 @@ function App() {
 
           <div className="interactive-windows-grid">
             <div className="interactive-card">
-              <div className="interactive-card-title">Interactive Image (Click missing/added objects)</div>
+              <div className="interactive-card-title">Click to delete objects you do not recall seeing in the previous image</div>
               <div className="interactive-viewport-wrapper">
                 <div style={{ position: 'relative', display: 'inline-block', lineHeight: 0, maxHeight: '100%', maxWidth: '100%' }}>
                   <img

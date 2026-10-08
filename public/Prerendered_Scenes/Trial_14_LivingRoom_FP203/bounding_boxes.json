@@ -46,15 +46,6 @@
     },
     {
         "id": 6,
-        "label": "Ottoman_1",
-        "x": 437,
-        "y": 367,
-        "width": 69,
-        "height": 87,
-        "isClicked": false
-    },
-    {
-        "id": 7,
         "label": "Painting_1",
         "x": 670,
         "y": 228,
@@ -63,7 +54,7 @@
         "isClicked": false
     },
     {
-        "id": 8,
+        "id": 7,
         "label": "Pillow_1",
         "x": 354,
         "y": 352,
@@ -72,7 +63,7 @@
         "isClicked": false
     },
     {
-        "id": 9,
+        "id": 8,
         "label": "RemoteControl_1",
         "x": 702,
         "y": 467,
@@ -81,7 +72,7 @@
         "isClicked": false
     },
     {
-        "id": 10,
+        "id": 9,
         "label": "Television_1",
         "x": 530,
         "y": 230,

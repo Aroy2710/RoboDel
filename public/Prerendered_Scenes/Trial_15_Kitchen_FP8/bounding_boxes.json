@@ -3,7 +3,7 @@
         "id": 1,
         "label": "Apple_1",
         "x": 502,
-        "y": 305,
+        "y": 304,
         "width": 11,
         "height": 12,
         "isClicked": false
@@ -12,9 +12,9 @@
         "id": 2,
         "label": "Bottle_1",
         "x": 450,
-        "y": 251,
+        "y": 250,
         "width": 12,
-        "height": 29,
+        "height": 30,
         "isClicked": false
     },
     {
@@ -46,11 +46,11 @@
     },
     {
         "id": 6,
-        "label": "Cup_1",
-        "x": 475,
-        "y": 297,
-        "width": 13,
-        "height": 20,
+        "label": "DishSponge_1",
+        "x": 683,
+        "y": 364,
+        "width": 37,
+        "height": 13,
         "isClicked": false
     },
     {
@@ -65,26 +65,26 @@
     {
         "id": 8,
         "label": "HousePlant_1",
-        "x": 145,
-        "y": 175,
-        "width": 130,
-        "height": 127,
+        "x": 143,
+        "y": 174,
+        "width": 127,
+        "height": 128,
         "isClicked": false
     },
     {
         "id": 9,
-        "label": "Kettle_1",
-        "x": 584,
-        "y": 290,
-        "width": 24,
-        "height": 23,
+        "label": "Pot_1",
+        "x": 260,
+        "y": 307,
+        "width": 55,
+        "height": 55,
         "isClicked": false
     },
     {
         "id": 10,
         "label": "SoapBottle_1",
         "x": 745,
-        "y": 320,
+        "y": 319,
         "width": 28,
         "height": 44,
         "isClicked": false

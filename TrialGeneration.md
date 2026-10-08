@@ -318,11 +318,11 @@ python scripts/batch_pregenerate.py \
   --scene FloorPlan402 \
   --trial Trial_10_Bathroom_FP402 \
   --x -1.7317 --y 0.9007 --z 2.173 --rotY 4.9999 --horizon 9.0002 \
-  --targets Candle GarbageCan HandTowel Plunger ScrubBrush SoapBottle LightSwitch\
+  --targets Candle GarbageCan HandTowel ToiletPaper ToiletPaperHanger SoapBottle\
   --random-obs
 ```
 
-Objects not included in Observation Phase : GarbageCan , HandTowel ScrubBrush
+Objects not included in Observation Phase : GarbageCan , HandTowel , SoapBottle , ToiletPaper , ToiletPaperHanger
 Done
 
 ## Trial 11
@@ -343,11 +343,11 @@ python scripts/batch_pregenerate.py \
   --scene FloorPlan7 \
   --trial Trial_11_Kitchen_FP7 \
   --x 0.5275 --y 0.901 --z -0.5127 --rotY 272.4999 --horizon -2 \
-  --targets Apple Bread Bowel CoffeeMachine Cup Kettle Lettuce GarbageCan HousePlant Pot Book\
+  --targets Apple Bread Bowl CoffeeMachine Egg Kettle Lettuce GarbageCan HousePlant Pot\
   --random-obs
 ```
 
-Objects not included in Observation Phase : Book , Bread , HousePlant , Kettle  
+Objects not included in Observation Phase : CoffeeMachine , Lettuce , Pot
 
 
 ## Trial 12
@@ -393,11 +393,11 @@ python scripts/batch_pregenerate.py \
   --scene FloorPlan303 \
   --trial Trial_13_Bedroom_FP303 \
   --x 0.9332 --y 0.901 --z -0.5238 --rotY 236.7496 --horizon 10.2501 \
-  --targets AlarmClock BaseballBat Book DeskLamp Laptop Pillow Poster Vase Mug CellPhone\
+  --targets AlarmClock BaseballBat Book DeskLamp Laptop Pillow Poster Dumbbell Mug CellPhone\
   --random-obs
 ```
 
-Objects not included in Observation Phase : Mirror , SoapBottle , Towel , Towel Holder 
+Objects not included in Observation Phase : BaseballBat , Laptop , Mug , Pillow
 
 
 ## Trial 14
@@ -418,11 +418,11 @@ python scripts/batch_pregenerate.py \
   --scene FloorPlan203 \
   --trial Trial_14_LivingRoom_FP203 \
   --x -2.222 --y 0.9071 --z 4.8928 --rotY 110.9997 --horizon 4.5002 \
-  --targets Laptop HousePlant Painting Box FloorLamp Newspaper Ottoman Pillow Television RemoteControl\
+  --targets Laptop HousePlant Painting Box FloorLamp Newspaper Pillow Television RemoteControl\
   --random-obs
 ```
 
-Objects not included in Observation Phase : Box , HousePlant , Newspaper , Painting , Pillow 
+Objects not included in Observation Phase : Painting, Pillow , RemoteControl
 
 ## Trial 15
 
@@ -442,11 +442,11 @@ python scripts/batch_pregenerate.py \
   --scene FloorPlan8 \
   --trial Trial_15_Kitchen_FP8 \
   --x -0.9018 --y 0.901 --z -0.0471 --rotY 119.9999 --horizon 11.5002 \
-  --targets Apple Bowl Bread Bottle CoffeeMachine GarbageCan HousePlant Kettle SoapBottle Cup\
+  --targets Apple Bowl Bread Bottle CoffeeMachine GarbageCan HousePlant Pot SoapBottle DishSponge\
   --random-obs
 ```
 
-Objects not included in Observation Phase : Bottle,  Bowl , Cup , GarbageCan
+Objects not included in Observation Phase : DishSponge , HousePlant , Pot 
 
 ## Trial 16
 
@@ -466,8 +466,8 @@ python scripts/batch_pregenerate.py \
   --scene FloorPlan302 \
   --trial Trial_16_Bedroom_FP302 \
   --x -0.1382 --y 0.901 --z 0.4646 --rotY 178.25 --horizon 19.0001 \
-  --targets AlarmClock Book Bowl CellPhone HousePlant Laptop Painting Pillow TeddyBear CreditCard\
+  --targets AlarmClock Book Bowl CellPhone HousePlant Laptop Painting Pillow TeddyBear Chair\
   --random-obs
 ```
 
-Objects not included in Observation Phase : CreditCard ,  HousePlant , Book
+Objects not included in Observation Phase : CellPhone , HousePlant, Pillow
