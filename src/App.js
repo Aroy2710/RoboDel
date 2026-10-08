@@ -3,7 +3,7 @@ import axios from 'axios';
 import './App.css';
 
 const API_URL = "https://multitude-resupply-apply.ngrok-free.dev ";
-const GOOGLE_FORM_URL = "https://forms.google.com";
+
 
 const PHASES = {
   ID_ENTRY: -4,
