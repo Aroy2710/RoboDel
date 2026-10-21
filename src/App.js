@@ -57,22 +57,47 @@ const TARGET_SEQUENCE = [
   "AlarmClock"
 ];
 
+// Helper to determine if the page load is a true refresh vs. a fresh URL visit
+const isPageReload = () => {
+  try {
+    const navEntries = performance.getEntriesByType('navigation');
+    if (navEntries.length > 0) {
+      return navEntries[0].type === 'reload';
+    }
+    // Fallback for older browsers
+    return (
+      window.performance &&
+      window.performance.navigation &&
+      window.performance.navigation.type === 1
+    );
+  } catch (e) {
+    return false;
+  }
+};
+
 function App() {
-  // 1. Restore participantId from localStorage or default to empty
+  // If user opens the link fresh (not a reload), clear previous session state immediately
+  if (!isPageReload()) {
+    sessionStorage.removeItem("robodel_pid");
+    sessionStorage.removeItem("robodel_trial_idx");
+    sessionStorage.removeItem("robodel_phase");
+  }
+
+  // 1. Restore participantId on reload only
   const [participantId, setParticipantId] = useState(() => {
-    return localStorage.getItem("robodel_pid") || "";
+    return sessionStorage.getItem("robodel_pid") || "";
   });
 
-  // 2. Restore currentTrialIndex from localStorage or default to 0
+  // 2. Restore currentTrialIndex on reload only
   const [currentTrialIndex, setCurrentTrialIndex] = useState(() => {
-    const saved = localStorage.getItem("robodel_trial_idx");
+    const saved = sessionStorage.getItem("robodel_trial_idx");
     return saved !== null ? parseInt(saved, 10) : 0;
   });
 
-  // 3. Restore the EXACT phase where the user left off
+  // 3. Restore the EXACT phase where the user left off on reload only
   const [phase, setPhase] = useState(() => {
-    const savedPid = localStorage.getItem("robodel_pid");
-    const savedPhase = localStorage.getItem("robodel_phase");
+    const savedPid = sessionStorage.getItem("robodel_pid");
+    const savedPhase = sessionStorage.getItem("robodel_phase");
     if (!savedPid) return PHASES.ID_ENTRY;
     if (savedPhase !== null) {
       return parseInt(savedPhase, 10);
@@ -116,13 +141,13 @@ function App() {
   });
   const [surveySubmitted, setSurveySubmitted] = useState(false);
 
-  // Synchronize state changes to localStorage
+  // Synchronize state changes to sessionStorage
   useEffect(() => {
     if (participantId) {
-      localStorage.setItem("robodel_pid", participantId);
+      sessionStorage.setItem("robodel_pid", participantId);
     }
-    localStorage.setItem("robodel_trial_idx", currentTrialIndex.toString());
-    localStorage.setItem("robodel_phase", phase.toString());
+    sessionStorage.setItem("robodel_trial_idx", currentTrialIndex.toString());
+    sessionStorage.setItem("robodel_phase", phase.toString());
   }, [participantId, currentTrialIndex, phase]);
 
   const handleStartExperiment = () => {
@@ -497,10 +522,10 @@ function App() {
         participant_id: participantId,
         ...surveyData
       });
-      // Clear localStorage tokens on complete submission
-      localStorage.removeItem("robodel_pid");
-      localStorage.removeItem("robodel_trial_idx");
-      localStorage.removeItem("robodel_phase");
+      // Clear sessionStorage tokens on completion
+      sessionStorage.removeItem("robodel_pid");
+      sessionStorage.removeItem("robodel_trial_idx");
+      sessionStorage.removeItem("robodel_phase");
       
       setSurveySubmitted(true);
       setTimeout(() => setPhase(PHASES.COMPLETED), 1200);
@@ -557,7 +582,7 @@ function App() {
       )}
 
       {phase === PHASES.BLANK_SCREEN && <div className="fixation-screen" />}
-      {phase === PHASES.FIXATION && <div className="fixation-screen"><div className="fixation-cross" /></div>}
+      {phase === PHASES.FIXATION && <div className="fixation-cross" />}
 
       {/* 3. OBSERVATION (FOVEATED BLUR) */}
       {phase === PHASES.OBSERVATION && (
@@ -686,7 +711,7 @@ function App() {
             Post-Experiment Feedback Questionnaire
           </h2>
           <p style={{ color: '#9ca3af', fontSize: '14px', lineHeight: '1.5' }}>
-            Participant: <b>{participantId}</b> | Completed: <b>{Math.min(currentTrialIndex + 1, TRIAL_SEQUENCE.length)} of {TRIAL_SEQUENCE.length}</b> trials[cite: 5].
+            Participant: <b>{participantId}</b> | Completed: <b>{Math.min(currentTrialIndex + 1, TRIAL_SEQUENCE.length)} of {TRIAL_SEQUENCE.length}</b> trials.
             <br />
             Please complete this short pilot survey below
           </p>
