@@ -58,15 +58,39 @@ const TARGET_SEQUENCE = [
 ];
 
 function App() {
-  const [currentTrialIndex, setCurrentTrialIndex] = useState(0);
+  // 1. Initialize participantId from localStorage or default to empty
+  const [participantId, setParticipantId] = useState(() => {
+    return localStorage.getItem("robodel_pid") || "";
+  });
+
+  // 2. Initialize currentTrialIndex from localStorage or default to 0
+  const [currentTrialIndex, setCurrentTrialIndex] = useState(() => {
+    const saved = localStorage.getItem("robodel_trial_idx");
+    return saved !== null ? parseInt(saved, 10) : 0;
+  });
+
+  // 3. Initialize phase: resume at TARGET_PROMPT if refreshed mid-trial, or fallback appropriately
+  const [phase, setPhase] = useState(() => {
+    const savedPid = localStorage.getItem("robodel_pid");
+    const savedPhase = localStorage.getItem("robodel_phase");
+    if (!savedPid) return PHASES.ID_ENTRY;
+    if (savedPhase !== null) {
+      const p = parseInt(savedPhase, 10);
+      // If refreshed mid-trial (fixation/observation/interactive), safely resume at TARGET_PROMPT
+      if (p >= PHASES.BLANK_SCREEN && p <= PHASES.INTERACTIVE) {
+        return PHASES.TARGET_PROMPT;
+      }
+      return p;
+    }
+    return PHASES.ID_ENTRY;
+  });
+
   const activeFolder = TRIAL_SEQUENCE[currentTrialIndex] || TRIAL_SEQUENCE[0];
   const activeTarget = TARGET_SEQUENCE[currentTrialIndex] || TARGET_SEQUENCE[0];
 
   const observationImage = `/Prerendered_Scenes/${activeFolder}/obs.jpg`;
   const interactiveBaseImage = `/Prerendered_Scenes/${activeFolder}/int.jpg`;
 
-  const [participantId, setParticipantId] = useState("");
-  const [phase, setPhase] = useState(PHASES.ID_ENTRY);
   const [isProcessing, setIsProcessing] = useState(false);
 
   const [displayImage, setDisplayImage] = useState(interactiveBaseImage);
@@ -96,6 +120,15 @@ function App() {
     experienced_glitches: "No"
   });
   const [surveySubmitted, setSurveySubmitted] = useState(false);
+
+  // Synchronize state changes to localStorage
+  useEffect(() => {
+    if (participantId) {
+      localStorage.setItem("robodel_pid", participantId);
+    }
+    localStorage.setItem("robodel_trial_idx", currentTrialIndex.toString());
+    localStorage.setItem("robodel_phase", phase.toString());
+  }, [participantId, currentTrialIndex, phase]);
 
   const handleStartExperiment = () => {
     if (!participantId.trim()) {
@@ -469,6 +502,11 @@ function App() {
         participant_id: participantId,
         ...surveyData
       });
+      // Clear localStorage tokens on successful completion
+      localStorage.removeItem("robodel_pid");
+      localStorage.removeItem("robodel_trial_idx");
+      localStorage.removeItem("robodel_phase");
+      
       setSurveySubmitted(true);
       setTimeout(() => setPhase(PHASES.COMPLETED), 1200);
     } catch (err) {
