@@ -58,29 +58,24 @@ const TARGET_SEQUENCE = [
 ];
 
 function App() {
-  // 1. Initialize participantId from localStorage or default to empty
+  // 1. Restore participantId from localStorage or default to empty
   const [participantId, setParticipantId] = useState(() => {
     return localStorage.getItem("robodel_pid") || "";
   });
 
-  // 2. Initialize currentTrialIndex from localStorage or default to 0
+  // 2. Restore currentTrialIndex from localStorage or default to 0
   const [currentTrialIndex, setCurrentTrialIndex] = useState(() => {
     const saved = localStorage.getItem("robodel_trial_idx");
     return saved !== null ? parseInt(saved, 10) : 0;
   });
 
-  // 3. Initialize phase: resume at TARGET_PROMPT if refreshed mid-trial, or fallback appropriately
+  // 3. Restore the EXACT phase where the user left off
   const [phase, setPhase] = useState(() => {
     const savedPid = localStorage.getItem("robodel_pid");
     const savedPhase = localStorage.getItem("robodel_phase");
     if (!savedPid) return PHASES.ID_ENTRY;
     if (savedPhase !== null) {
-      const p = parseInt(savedPhase, 10);
-      // If refreshed mid-trial (fixation/observation/interactive), safely resume at TARGET_PROMPT
-      if (p >= PHASES.BLANK_SCREEN && p <= PHASES.INTERACTIVE) {
-        return PHASES.TARGET_PROMPT;
-      }
-      return p;
+      return parseInt(savedPhase, 10);
     }
     return PHASES.ID_ENTRY;
   });
@@ -502,7 +497,7 @@ function App() {
         participant_id: participantId,
         ...surveyData
       });
-      // Clear localStorage tokens on successful completion
+      // Clear localStorage tokens on complete submission
       localStorage.removeItem("robodel_pid");
       localStorage.removeItem("robodel_trial_idx");
       localStorage.removeItem("robodel_phase");
@@ -691,7 +686,7 @@ function App() {
             Post-Experiment Feedback Questionnaire
           </h2>
           <p style={{ color: '#9ca3af', fontSize: '14px', lineHeight: '1.5' }}>
-            Participant: <b>{participantId}</b> | Completed: <b>{Math.min(currentTrialIndex + 1, TRIAL_SEQUENCE.length)} of {TRIAL_SEQUENCE.length}</b> trials.
+            Participant: <b>{participantId}</b> | Completed: <b>{Math.min(currentTrialIndex + 1, TRIAL_SEQUENCE.length)} of {TRIAL_SEQUENCE.length}</b> trials[cite: 5].
             <br />
             Please complete this short pilot survey below
           </p>
