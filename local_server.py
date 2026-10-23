@@ -88,11 +88,17 @@ def save_session(data: SessionData):
         if "sessions" not in master_data or not isinstance(master_data["sessions"], list):
             master_data["sessions"] = []
         
+        # 1-based trial number formatted with zero padding (e.g., 01, 02, ... 16)
+        trial_num = f"{data.trial_index + 1:02d}"
+        clean_pid = str(data.participant_id).strip().replace(" ", "_")
+        
         clean_image_path = unquote(data.final_image_path)
         relative_img_path = clean_image_path.lstrip("/")
         source_img_path = os.path.join(PUBLIC_DIR, relative_img_path)
         ext = os.path.splitext(clean_image_path)[1] or ".jpg"
-        dest_img_filename = f"{session_id}_{data.base_scene_name}{ext}"
+        
+        # Prefixed with participant ID and trial number
+        dest_img_filename = f"pid_{clean_pid}_trial_{trial_num}_{data.base_scene_name}_{session_id}{ext}"
         dest_img_path = os.path.join(IMG_DIR, dest_img_filename)
         
         if os.path.exists(source_img_path):
@@ -124,7 +130,7 @@ def save_session(data: SessionData):
         with open(MASTER_JSON_PATH, "w") as f:
             json.dump(master_data, f, indent=4)
             
-        print(f"Successfully saved session {session_id} for participant {pid}")
+        print(f"Successfully saved session {session_id} for participant {pid} (Image: {dest_img_filename})")
         return {"status": "success", "session_id": session_id}
     except Exception as e:
         print(f"Error saving session: {str(e)}")
