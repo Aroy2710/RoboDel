@@ -64,7 +64,6 @@ const isPageReload = () => {
     if (navEntries.length > 0) {
       return navEntries[0].type === 'reload';
     }
-    // Fallback for older browsers
     return (
       window.performance &&
       window.performance.navigation &&
@@ -76,25 +75,21 @@ const isPageReload = () => {
 };
 
 function App() {
-  // If user opens the link fresh (not a reload), clear previous session state immediately
   if (!isPageReload()) {
     sessionStorage.removeItem("robodel_pid");
     sessionStorage.removeItem("robodel_trial_idx");
     sessionStorage.removeItem("robodel_phase");
   }
 
-  // 1. Restore participantId on reload only
   const [participantId, setParticipantId] = useState(() => {
     return sessionStorage.getItem("robodel_pid") || "";
   });
 
-  // 2. Restore currentTrialIndex on reload only
   const [currentTrialIndex, setCurrentTrialIndex] = useState(() => {
     const saved = sessionStorage.getItem("robodel_trial_idx");
     return saved !== null ? parseInt(saved, 10) : 0;
   });
 
-  // 3. Restore the EXACT phase where the user left off on reload only
   const [phase, setPhase] = useState(() => {
     const savedPid = sessionStorage.getItem("robodel_pid");
     const savedPhase = sessionStorage.getItem("robodel_phase");
@@ -141,7 +136,6 @@ function App() {
   });
   const [surveySubmitted, setSurveySubmitted] = useState(false);
 
-  // Synchronize state changes to sessionStorage
   useEffect(() => {
     if (participantId) {
       sessionStorage.setItem("robodel_pid", participantId);
@@ -160,16 +154,13 @@ function App() {
     setPhase(PHASES.TARGET_PROMPT);
   };
 
+  // ONLY reset trial data when currentTrialIndex changes (NOT on phase transitions!)
   useEffect(() => {
     setDisplayImage(interactiveBaseImage);
     setRemovedObjects([]);
     setRemovedLabels([]);
     telemetryRef.current = []; 
     currentMouseRef.current = { x: 0, y: 0 }; 
-
-    if (phase !== PHASES.ID_ENTRY && phase !== PHASES.SURVEY && phase !== PHASES.COMPLETED) {
-      trialStartTimeRef.current = performance.now();
-    }
 
     const ref = new Image();
     ref.crossOrigin = "anonymous";
@@ -257,7 +248,16 @@ function App() {
       saliconLUTRef.current = lut;
     };
     ref.src = observationImage; 
-  }, [currentTrialIndex, observationImage, interactiveBaseImage, phase]);
+  }, [currentTrialIndex, observationImage, interactiveBaseImage]); // <--- Removed 'phase' dependency!
+
+  // Reset trial start timer strictly when entering trial or observation
+  useEffect(() => {
+    if (phase === PHASES.TARGET_PROMPT || phase === PHASES.OBSERVATION) {
+      if (!trialStartTimeRef.current || phase === PHASES.TARGET_PROMPT) {
+        trialStartTimeRef.current = performance.now();
+      }
+    }
+  }, [phase]);
 
   useEffect(() => {
     if (currentTrialIndex >= TRIAL_SEQUENCE.length) return;
@@ -299,11 +299,12 @@ function App() {
       const dxSqArray = new Uint32Array(w); 
 
       const handleMouseMove = (e) => {
-        const rect = canvas.getBoundingClientRect();
-        const scaleX = canvas.width / rect.width;
-        const scaleY = canvas.height / rect.height;
-        const mx = Math.round((e.clientX - rect.left) * scaleX);
-        const my = Math.round((e.clientY - rect.top) * scaleY);
+        if (!canvasRef.current) return;
+        const rect = canvasRef.current.getBoundingClientRect();
+        const scaleX = canvasRef.current.width / rect.width;
+        const scaleY = canvasRef.current.height / rect.height;
+        const mx = Math.max(0, Math.min(canvasRef.current.width, Math.round((e.clientX - rect.left) * scaleX)));
+        const my = Math.max(0, Math.min(canvasRef.current.height, Math.round((e.clientY - rect.top) * scaleY)));
 
         currentMouseRef.current = { x: mx, y: my };
 
@@ -312,6 +313,7 @@ function App() {
         renderFrameRef.current = requestAnimationFrame(() => {
           const lut = saliconLUTRef.current;
           const pyra = pyramidRefs.current;
+          if (!lut || !pyra || pyra.length === 0) return;
 
           for (let px = 0; px < w; px++) {
             const dx = px - mx;
@@ -364,20 +366,21 @@ function App() {
         }
       };
 
-      canvas.addEventListener('mousemove', handleMouseMove);
+      // Listen on window to reliably catch all movements
+      window.addEventListener('mousemove', handleMouseMove);
       window.addEventListener('mousedown', handleMouseDown); 
       
       const telemetryIntervalId = setInterval(() => {
         const { x, y } = currentMouseRef.current;
-        if (x !== 0 || y !== 0) {
-          telemetryRef.current.push({ t: performance.now(), x: Math.round(x), y: Math.round(y) });
-        }
+        telemetryRef.current.push({ 
+          t: performance.now(), 
+          x: Math.round(x), 
+          y: Math.round(y) 
+        });
       }, 300);
 
-      handleMouseMove({ clientX: -999, clientY: -999 });
-
       return () => {
-        canvas.removeEventListener('mousemove', handleMouseMove);
+        window.removeEventListener('mousemove', handleMouseMove);
         window.removeEventListener('mousedown', handleMouseDown); 
         clearInterval(telemetryIntervalId);
         if (renderFrameRef.current) cancelAnimationFrame(renderFrameRef.current);
@@ -444,10 +447,11 @@ function App() {
     const trialDurationSec = (performance.now() - (trialStartTimeRef.current || performance.now())) / 1000;
     const totalDurationSec = (performance.now() - (experimentStartTimeRef.current || performance.now())) / 1000;
 
+    const startTime = rawTelemetry.length > 0 ? rawTelemetry[0].t : 0;
     const formattedTelemetry = {
       X: rawTelemetry.map(p => Number(p.x.toFixed(1))),
       Y: rawTelemetry.map(p => Number(p.y.toFixed(1))),
-      T: rawTelemetry.map(p => Math.round(p.t - (rawTelemetry.length > 0 ? rawTelemetry[0].t : 0))),
+      T: rawTelemetry.map(p => Math.round(p.t - startTime)),
       length: rawTelemetry.length
     };
 
@@ -522,7 +526,6 @@ function App() {
         participant_id: participantId,
         ...surveyData
       });
-      // Clear sessionStorage tokens on completion
       sessionStorage.removeItem("robodel_pid");
       sessionStorage.removeItem("robodel_trial_idx");
       sessionStorage.removeItem("robodel_phase");
