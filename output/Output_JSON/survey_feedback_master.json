@@ -1,0 +1,55 @@
+{
+    "survey_version": "1.0",
+    "responses": [
+        {
+            "participant_id": "1",
+            "ease_of_use_score": 10,
+            "mouse_control_comfort": "Smooth and instant",
+            "visual_fatigue": "None / Felt completely fine",
+            "ux_improvement_suggestions": "Provide higher resolution render.",
+            "experienced_glitches": "No",
+            "additional_notes": null,
+            "submission_time_iso": "2026-10-23T13:03:51Z"
+        },
+        {
+            "participant_id": "2",
+            "ease_of_use_score": 8,
+            "mouse_control_comfort": "Smooth and instant",
+            "visual_fatigue": "Mild tiredness",
+            "ux_improvement_suggestions": "The blur affect caused some tiredness but it was at a good level to actually have a blur, if that makes sense.\n\nOtherwise, I don't see much to improve. The interface was mostly intuitive.",
+            "experienced_glitches": "No, I didn't see anything.",
+            "additional_notes": null,
+            "submission_time_iso": "2026-10-24T00:24:15Z"
+        },
+        {
+            "participant_id": "3",
+            "ease_of_use_score": 10,
+            "mouse_control_comfort": "Smooth and instant",
+            "visual_fatigue": "None / Felt completely fine",
+            "ux_improvement_suggestions": "",
+            "experienced_glitches": "No",
+            "additional_notes": null,
+            "submission_time_iso": "2026-10-24T01:26:13Z"
+        },
+        {
+            "participant_id": "4",
+            "ease_of_use_score": 8,
+            "mouse_control_comfort": "Good / comfortable",
+            "visual_fatigue": "None / Felt completely fine",
+            "ux_improvement_suggestions": "Maybe an undo button if you click accidently LOL",
+            "experienced_glitches": "No",
+            "additional_notes": null,
+            "submission_time_iso": "2026-10-24T04:53:20Z"
+        },
+        {
+            "participant_id": "5",
+            "ease_of_use_score": 9,
+            "mouse_control_comfort": "Smooth and instant",
+            "visual_fatigue": "None / Felt completely fine",
+            "ux_improvement_suggestions": "A minor issue was that the green box around objects was too small to click easily, so making them larger would be an slight improvement.",
+            "experienced_glitches": "No",
+            "additional_notes": null,
+            "submission_time_iso": "2026-10-25T03:12:15Z"
+        }
+    ]
+}
