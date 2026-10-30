@@ -21,6 +21,9 @@ app.add_middleware(
 class SessionData(BaseModel):
     participant_id: str
     target_object: str
+    target_found: bool = False
+    target_confirmation_coords: Optional[Dict[str, int]] = None
+    search_latency_sec: Optional[float] = 0.0
     removed_objects: list
     removed_labels: list
     base_scene_name: str
@@ -88,7 +91,6 @@ def save_session(data: SessionData):
         if "sessions" not in master_data or not isinstance(master_data["sessions"], list):
             master_data["sessions"] = []
         
-        # 1-based trial number formatted with zero padding (e.g., 01, 02, ... 16)
         trial_num = f"{data.trial_index + 1:02d}"
         clean_pid = str(data.participant_id).strip().replace(" ", "_")
         
@@ -97,7 +99,6 @@ def save_session(data: SessionData):
         source_img_path = os.path.join(PUBLIC_DIR, relative_img_path)
         ext = os.path.splitext(clean_image_path)[1] or ".jpg"
         
-        # Prefixed with participant ID and trial number
         dest_img_filename = f"pid_{clean_pid}_trial_{trial_num}_{data.base_scene_name}_{session_id}{ext}"
         dest_img_path = os.path.join(IMG_DIR, dest_img_filename)
         
@@ -130,7 +131,7 @@ def save_session(data: SessionData):
         with open(MASTER_JSON_PATH, "w") as f:
             json.dump(master_data, f, indent=4)
             
-        print(f"Successfully saved session {session_id} for participant {pid} (Image: {dest_img_filename})")
+        print(f"Successfully saved session {session_id} for participant {pid} | Target Found: {data.target_found} (Latency: {data.search_latency_sec:.2f}s)")
         return {"status": "success", "session_id": session_id}
     except Exception as e:
         print(f"Error saving session: {str(e)}")

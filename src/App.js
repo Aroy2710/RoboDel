@@ -57,7 +57,6 @@ const TARGET_SEQUENCE = [
   "AlarmClock"
 ];
 
-// Helper to determine if the page load is a true refresh vs. a fresh URL visit
 const isPageReload = () => {
   try {
     const navEntries = performance.getEntriesByType('navigation');
@@ -124,8 +123,15 @@ function App() {
   const [boundingboxes, setBoundingBoxes] = useState([]);
   const [naturalDims, setNaturalDims] = useState(null);
 
+  // Target confirmation states
+  const [targetFound, setTargetFound] = useState(false);
+  const [targetConfirmCoords, setTargetConfirmCoords] = useState(null);
+  const [searchLatencySec, setSearchLatencySec] = useState(0);
+  const [feedbackRing, setFeedbackRing] = useState(null);
+
   const experimentStartTimeRef = useRef(null);
   const trialStartTimeRef = useRef(null);
+  const observationStartTimeRef = useRef(null);
 
   const [surveyData, setSurveyData] = useState({
     ease_of_use_score: 8,
@@ -154,11 +160,14 @@ function App() {
     setPhase(PHASES.TARGET_PROMPT);
   };
 
-  // ONLY reset trial data when currentTrialIndex changes (NOT on phase transitions!)
   useEffect(() => {
     setDisplayImage(interactiveBaseImage);
     setRemovedObjects([]);
     setRemovedLabels([]);
+    setTargetFound(false);
+    setTargetConfirmCoords(null);
+    setSearchLatencySec(0);
+    setFeedbackRing(null);
     telemetryRef.current = []; 
     currentMouseRef.current = { x: 0, y: 0 }; 
 
@@ -248,14 +257,13 @@ function App() {
       saliconLUTRef.current = lut;
     };
     ref.src = observationImage; 
-  }, [currentTrialIndex, observationImage, interactiveBaseImage]); // <--- Removed 'phase' dependency!
+  }, [currentTrialIndex, observationImage, interactiveBaseImage]);
 
-  // Reset trial start timer strictly when entering trial or observation
   useEffect(() => {
-    if (phase === PHASES.TARGET_PROMPT || phase === PHASES.OBSERVATION) {
-      if (!trialStartTimeRef.current || phase === PHASES.TARGET_PROMPT) {
-        trialStartTimeRef.current = performance.now();
-      }
+    if (phase === PHASES.TARGET_PROMPT) {
+      trialStartTimeRef.current = performance.now();
+    } else if (phase === PHASES.OBSERVATION) {
+      observationStartTimeRef.current = performance.now();
     }
   }, [phase]);
 
@@ -359,16 +367,58 @@ function App() {
         });
       };
 
-      const handleMouseDown = (e) => {
-        if (e.button === 0) { 
+      // Double-click handler: Verifies target hit, provides micro-feedback, and transitions
+      const handleDoubleClick = (e) => {
+        if (!canvasRef.current || !naturalDims) return;
+        const rect = canvasRef.current.getBoundingClientRect();
+        const scaleX = canvasRef.current.width / rect.width;
+        const scaleY = canvasRef.current.height / rect.height;
+        const clickX = Math.round((e.clientX - rect.left) * scaleX);
+        const clickY = Math.round((e.clientY - rect.top) * scaleY);
+
+        const latency = observationStartTimeRef.current 
+          ? (performance.now() - observationStartTimeRef.current) / 1000 
+          : 0;
+        setSearchLatencySec(latency);
+
+        // Target bounding box lookup with 24px invisible padding for Fitts's Law
+        const PADDING = 24;
+        const targetClean = activeTarget.toLowerCase().replace(/[^a-z0-9]/g, '');
+        
+        const matchedTargetBox = boundingboxes.find(box => {
+          const labelClean = box.label.toLowerCase().replace(/[^a-z0-9]/g, '');
+          return labelClean.includes(targetClean) || targetClean.includes(labelClean);
+        });
+
+        let isFound = false;
+        if (matchedTargetBox) {
+          isFound = (
+            clickX >= (matchedTargetBox.x - PADDING) &&
+            clickX <= (matchedTargetBox.x + matchedTargetBox.width + PADDING) &&
+            clickY >= (matchedTargetBox.y - PADDING) &&
+            clickY <= (matchedTargetBox.y + matchedTargetBox.height + PADDING)
+          );
+        }
+
+        setTargetFound(isFound);
+        setTargetConfirmCoords({ x: clickX, y: clickY });
+
+        // Show visual confirmation ring directly under cursor position
+        setFeedbackRing({
+          clientX: e.clientX,
+          clientY: e.clientY,
+          success: isFound
+        });
+
+        // Short 250ms feedback visibility before advancing to interactive verification
+        setTimeout(() => {
           setPhase(PHASES.TRANSITION);
           setTimeout(() => setPhase(PHASES.INTERACTIVE), 500);
-        }
+        }, 250);
       };
 
-      // Listen on window to reliably catch all movements
       window.addEventListener('mousemove', handleMouseMove);
-      window.addEventListener('mousedown', handleMouseDown); 
+      window.addEventListener('dblclick', handleDoubleClick);
       
       const telemetryIntervalId = setInterval(() => {
         const { x, y } = currentMouseRef.current;
@@ -381,12 +431,12 @@ function App() {
 
       return () => {
         window.removeEventListener('mousemove', handleMouseMove);
-        window.removeEventListener('mousedown', handleMouseDown); 
+        window.removeEventListener('dblclick', handleDoubleClick);
         clearInterval(telemetryIntervalId);
         if (renderFrameRef.current) cancelAnimationFrame(renderFrameRef.current);
       };
     }
-  }, [phase, naturalDims]);
+  }, [phase, naturalDims, boundingboxes, activeTarget]);
 
   const handleImageClick = (event) => {
     if (isProcessing || !naturalDims || !workingImageRef.current) return;
@@ -458,6 +508,9 @@ function App() {
     await axios.post(`${API_URL}/save_session`, {
       participant_id: participantId,
       target_object: activeTarget,
+      target_found: targetFound,
+      target_confirmation_coords: targetConfirmCoords,
+      search_latency_sec: searchLatencySec,
       removed_objects: removedObjects,
       removed_labels: removedLabels,
       base_scene_name: activeFolder,
@@ -574,7 +627,9 @@ function App() {
             Your target object is: <br />
             <strong style={{ fontSize: '60px', color: '#3b82f6', display: 'block', marginTop: '16px' }}>{activeTarget}</strong>
           </div>
-          <br/>
+          <p style={{ color: '#9ca3af', fontSize: '16px', marginBottom: '20px' }}>
+            Find the target using the clear focus circle, then <b>double-click on the target</b> to continue.
+          </p>
           <button 
             onClick={() => setPhase(PHASES.BLANK_SCREEN)}
             style={{ padding: '14px 40px', fontSize: '20px', backgroundColor: '#22c55e', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold' }}
@@ -589,12 +644,31 @@ function App() {
 
       {/* 3. OBSERVATION (FOVEATED BLUR) */}
       {phase === PHASES.OBSERVATION && (
-        <div className="observable-screen" style={{ overflow: 'hidden', width: '100vw', height: '100vh', backgroundColor: 'black' }}>
+        <div className="observable-screen" style={{ overflow: 'hidden', width: '100vw', height: '100vh', backgroundColor: 'black', position: 'relative' }}>
           <canvas
             ref={canvasRef}
             className="observable-image"
             style={{ width: '100%', height: '100%', pointerEvents: 'auto', cursor: 'none', objectFit: 'cover' }}
           />
+
+          {/* Quick Confirmation Flash Ring on Double-Click */}
+          {feedbackRing && (
+            <div
+              style={{
+                position: 'fixed',
+                left: feedbackRing.clientX - 28,
+                top: feedbackRing.clientY - 28,
+                width: 56,
+                height: 56,
+                borderRadius: '50%',
+                border: `4px solid ${feedbackRing.success ? '#22c55e' : '#f59e0b'}`,
+                backgroundColor: feedbackRing.success ? 'rgba(34, 197, 94, 0.25)' : 'rgba(245, 158, 11, 0.25)',
+                pointerEvents: 'none',
+                boxShadow: `0 0 16px ${feedbackRing.success ? '#22c55e' : '#f59e0b'}`,
+                zIndex: 9999
+              }}
+            />
+          )}
         </div>
       )}
 
@@ -617,6 +691,19 @@ function App() {
                 Trial {currentTrialIndex + 1} of {TRIAL_SEQUENCE.length}
               </span>
               <h2 style={{ margin: 0 }}>Target: <span style={{ color: '#60a5fa' }}>{activeTarget}</span></h2>
+              {targetFound && (
+                <span style={{
+                  background: 'rgba(34, 197, 94, 0.15)',
+                  border: '1px solid #22c55e',
+                  color: '#4ade80',
+                  padding: '4px 10px',
+                  borderRadius: '12px',
+                  fontSize: '12px',
+                  fontWeight: 'bold'
+                }}>
+                  Target Located ({searchLatencySec.toFixed(1)}s)
+                </span>
+              )}
             </div>
 
             <div style={{ display: 'flex', gap: '14px', alignItems: 'center' }}>
