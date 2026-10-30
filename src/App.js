@@ -123,8 +123,9 @@ function App() {
   const [boundingboxes, setBoundingBoxes] = useState([]);
   const [naturalDims, setNaturalDims] = useState(null);
 
-  // Target confirmation states
+  // Behavioral Search & Detection Logging States
   const [targetFound, setTargetFound] = useState(false);
+  const [terminationMode, setTerminationMode] = useState("unknown");
   const [targetConfirmCoords, setTargetConfirmCoords] = useState(null);
   const [searchLatencySec, setSearchLatencySec] = useState(0);
   const [feedbackRing, setFeedbackRing] = useState(null);
@@ -165,6 +166,7 @@ function App() {
     setRemovedObjects([]);
     setRemovedLabels([]);
     setTargetFound(false);
+    setTerminationMode("unknown");
     setTargetConfirmCoords(null);
     setSearchLatencySec(0);
     setFeedbackRing(null);
@@ -288,6 +290,7 @@ function App() {
     return () => clearTimeout(timerId);
   }, [phase]);
 
+  // Phase 1 Observation Interaction: Mouse tracking, Double-click confirmation, and Spacebar abandonment
   useEffect(() => {
     if (phase === PHASES.OBSERVATION && naturalDims && workingImageRef.current && pyramidRefs.current.length > 0) {
       const canvas = canvasRef.current;
@@ -367,12 +370,12 @@ function App() {
         });
       };
 
-      // Double-click handler: Verifies target hit, provides micro-feedback, and transitions
+      // Double Left-Click: In-situ Target Confirmation
       const handleDoubleClick = (e) => {
         if (!canvasRef.current || !naturalDims) return;
         const rect = canvasRef.current.getBoundingClientRect();
-        const scaleX = canvasRef.current.width / rect.width;
-        const scaleY = canvasRef.current.height / rect.height;
+        const scaleX = naturalDims.width / rect.width;
+        const scaleY = naturalDims.height / rect.height;
         const clickX = Math.round((e.clientX - rect.left) * scaleX);
         const clickY = Math.round((e.clientY - rect.top) * scaleY);
 
@@ -380,45 +383,78 @@ function App() {
           ? (performance.now() - observationStartTimeRef.current) / 1000 
           : 0;
         setSearchLatencySec(latency);
+        setTargetConfirmCoords({ x: clickX, y: clickY });
 
-        // Target bounding box lookup with 24px invisible padding for Fitts's Law
-        const PADDING = 24;
+        const PADDING = 24; // Fitts's law compliance
         const targetClean = activeTarget.toLowerCase().replace(/[^a-z0-9]/g, '');
-        
+
+        // 1. Check if clicked the target bounding box
         const matchedTargetBox = boundingboxes.find(box => {
           const labelClean = box.label.toLowerCase().replace(/[^a-z0-9]/g, '');
           return labelClean.includes(targetClean) || targetClean.includes(labelClean);
         });
 
-        let isFound = false;
-        if (matchedTargetBox) {
-          isFound = (
-            clickX >= (matchedTargetBox.x - PADDING) &&
-            clickX <= (matchedTargetBox.x + matchedTargetBox.width + PADDING) &&
-            clickY >= (matchedTargetBox.y - PADDING) &&
-            clickY <= (matchedTargetBox.y + matchedTargetBox.height + PADDING)
-          );
+        const isTargetHit = Boolean(
+          matchedTargetBox &&
+          clickX >= (matchedTargetBox.x - PADDING) &&
+          clickX <= (matchedTargetBox.x + matchedTargetBox.width + PADDING) &&
+          clickY >= (matchedTargetBox.y - PADDING) &&
+          clickY <= (matchedTargetBox.y + matchedTargetBox.height + PADDING)
+        );
+
+        // 2. If not the target, check if they clicked another object
+        const clickedDistractor = !isTargetHit ? boundingboxes.find(box =>
+          clickX >= (box.x - PADDING) &&
+          clickX <= (box.x + box.width + PADDING) &&
+          clickY >= (box.y - PADDING) &&
+          clickY <= (box.y + box.height + PADDING)
+        ) : null;
+
+        let mode = "empty_click";
+        if (isTargetHit) {
+          mode = "target_detected";
+        } else if (clickedDistractor) {
+          mode = `confused_with_${clickedDistractor.label}`;
         }
 
-        setTargetFound(isFound);
-        setTargetConfirmCoords({ x: clickX, y: clickY });
+        setTargetFound(isTargetHit);
+        setTerminationMode(mode);
 
-        // Show visual confirmation ring directly under cursor position
+        // Display feedback pulse under cursor
         setFeedbackRing({
           clientX: e.clientX,
           clientY: e.clientY,
-          success: isFound
+          success: isTargetHit
         });
 
-        // Short 250ms feedback visibility before advancing to interactive verification
         setTimeout(() => {
           setPhase(PHASES.TRANSITION);
           setTimeout(() => setPhase(PHASES.INTERACTIVE), 500);
         }, 250);
       };
 
+      // Spacebar: Explicit Abandonment / Target-Absent bypass
+      const handleKeyDown = (e) => {
+        if (e.code === 'Space') {
+          e.preventDefault(); // Guard against page scroll
+
+          const latency = observationStartTimeRef.current 
+            ? (performance.now() - observationStartTimeRef.current) / 1000 
+            : 0;
+
+          setSearchLatencySec(latency);
+          setTargetFound(false);
+          setTargetConfirmCoords(null);
+          setTerminationMode("abandoned");
+
+          setPhase(PHASES.TRANSITION);
+          setTimeout(() => setPhase(PHASES.INTERACTIVE), 500);
+        }
+      };
+
       window.addEventListener('mousemove', handleMouseMove);
       window.addEventListener('dblclick', handleDoubleClick);
+      window.addEventListener('keydown', handleKeyDown);
       
       const telemetryIntervalId = setInterval(() => {
         const { x, y } = currentMouseRef.current;
@@ -432,6 +468,7 @@ function App() {
       return () => {
         window.removeEventListener('mousemove', handleMouseMove);
         window.removeEventListener('dblclick', handleDoubleClick);
+        window.removeEventListener('keydown', handleKeyDown);
         clearInterval(telemetryIntervalId);
         if (renderFrameRef.current) cancelAnimationFrame(renderFrameRef.current);
       };
@@ -509,6 +546,7 @@ function App() {
       participant_id: participantId,
       target_object: activeTarget,
       target_found: targetFound,
+      termination_mode: terminationMode,
       target_confirmation_coords: targetConfirmCoords,
       search_latency_sec: searchLatencySec,
       removed_objects: removedObjects,
@@ -623,12 +661,14 @@ function App() {
       {/* 2. TARGET PROMPT */}
       {phase === PHASES.TARGET_PROMPT && (
         <div className="centered-view" style={{ textAlign: 'center', fontFamily: 'sans-serif' }}>
-          <div style={{ margin: '0 auto 40px auto', fontSize: '26px', backgroundColor: '#f3f4f6', padding: '40px 60px', borderRadius: '12px', color: '#374151', display: 'inline-block' }}>
+          <div style={{ margin: '0 auto 30px auto', fontSize: '26px', backgroundColor: '#f3f4f6', padding: '40px 60px', borderRadius: '12px', color: '#374151', display: 'inline-block' }}>
             Your target object is: <br />
             <strong style={{ fontSize: '60px', color: '#3b82f6', display: 'block', marginTop: '16px' }}>{activeTarget}</strong>
           </div>
-          <p style={{ color: '#9ca3af', fontSize: '16px', marginBottom: '20px' }}>
-            Find the target using the clear focus circle, then <b>double-click on the target</b> to continue.
+          <p style={{ color: '#9ca3af', fontSize: '16px', maxWidth: '560px', margin: '0 auto 25px auto', lineHeight: '1.6' }}>
+            Search using the clear focus circle.<br />
+            <b>Double left-click directly on the target</b> when found.<br />
+            Press the <b>Spacebar</b> if the target is absent or cannot be found[cite: 1].
           </p>
           <button 
             onClick={() => setPhase(PHASES.BLANK_SCREEN)}
@@ -651,7 +691,7 @@ function App() {
             style={{ width: '100%', height: '100%', pointerEvents: 'auto', cursor: 'none', objectFit: 'cover' }}
           />
 
-          {/* Quick Confirmation Flash Ring on Double-Click */}
+          {/* Feedback Ring upon Double-Click */}
           {feedbackRing && (
             <div
               style={{

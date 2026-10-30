@@ -22,6 +22,7 @@ class SessionData(BaseModel):
     participant_id: str
     target_object: str
     target_found: bool = False
+    termination_mode: Optional[str] = "unknown"
     target_confirmation_coords: Optional[Dict[str, int]] = None
     search_latency_sec: Optional[float] = 0.0
     removed_objects: list
@@ -131,7 +132,7 @@ def save_session(data: SessionData):
         with open(MASTER_JSON_PATH, "w") as f:
             json.dump(master_data, f, indent=4)
             
-        print(f"Successfully saved session {session_id} for participant {pid} | Target Found: {data.target_found} (Latency: {data.search_latency_sec:.2f}s)")
+        print(f"Session {session_id} saved for {pid} | Target Found: {data.target_found} | Mode: {data.termination_mode} | Latency: {data.search_latency_sec:.2f}s")
         return {"status": "success", "session_id": session_id}
     except Exception as e:
         print(f"Error saving session: {str(e)}")
