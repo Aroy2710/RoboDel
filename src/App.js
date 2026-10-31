@@ -668,7 +668,7 @@ function App() {
           <p style={{ color: '#9ca3af', fontSize: '16px', maxWidth: '560px', margin: '0 auto 25px auto', lineHeight: '1.6' }}>
             Search using the clear focus circle.<br />
             <b>Double left-click directly on the target</b> when found.<br />
-            Press the <b>Spacebar</b> if the target is absent or cannot be found[cite: 1].
+            Press the <b>Spacebar</b> if the target is absent or cannot be found.
           </p>
           <button 
             onClick={() => setPhase(PHASES.BLANK_SCREEN)}
