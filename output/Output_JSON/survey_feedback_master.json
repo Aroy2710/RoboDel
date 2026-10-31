@@ -50,6 +50,26 @@
             "experienced_glitches": "No",
             "additional_notes": null,
             "submission_time_iso": "2026-10-25T03:12:15Z"
+        },
+        {
+            "participant_id": "7",
+            "ease_of_use_score": 6,
+            "mouse_control_comfort": "A little delayed or sluggish",
+            "visual_fatigue": "Mild tiredness",
+            "ux_improvement_suggestions": "1. The blurriness outside the focus circle needs to be adjusted, currently it is somewhat too clear for me and cannot hide the overall semantics of the background well.\n\n2. The second phase of each trial is not presented clearly at all. Because you split the screen into two halves (1 for removal control and 1 for perception after object removal), some objects are too small to recognize what they are and how their effects on my perception during trial.\n\n3. Some objects showed in the first phase are too blurry for me to understand what they are. Maybe this can be improved if we use realistic image instead in the future.\n\n4. Because I use trackpad on laptop to do the experiments, I feel a little uncomfortable and confused between double left-click and double right-click. The spacebar is also not a good option for skipping step as it could take more time for user to retrieve which key to press if they want to skip the first phase.",
+            "experienced_glitches": "No",
+            "additional_notes": null,
+            "submission_time_iso": "2026-10-31T02:26:37Z"
+        },
+        {
+            "participant_id": "6",
+            "ease_of_use_score": 7,
+            "mouse_control_comfort": "Smooth and instant",
+            "visual_fatigue": "None / Felt completely fine",
+            "ux_improvement_suggestions": "I think the targeting system might be a bit buggy because sometimes when i clicked on the target i don't think it registered that I got the correct target. ",
+            "experienced_glitches": "No",
+            "additional_notes": null,
+            "submission_time_iso": "2026-10-31T02:46:45Z"
         }
     ]
 }
