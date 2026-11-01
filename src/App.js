@@ -847,16 +847,16 @@ function App() {
                   overflow: 'hidden',
                   position: 'relative'
                 }}>
-                   <div style={{ position: 'relative', display: 'inline-block', maxHeight: '100%', maxWidth: '100%' }}>
+                   <div style={{ position: 'relative', width: '100%', height: '100%' }}>
                       <img
                         id="full-screen-scene-img"
                         src={displayImage} // Shows the updated in-painted image
                         onClick={handleImageClick}
                         alt="Interactive Target"
                         style={{ 
-                          maxHeight: '100%', 
-                          maxWidth: '100%', 
-                          objectFit: 'contain',
+                          width: '100%', 
+                          height: '100%', 
+                          objectFit: 'fill',
                           cursor: isProcessing ? 'wait' : 'crosshair'
                         }}
                       />
