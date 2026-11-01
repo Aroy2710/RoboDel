@@ -821,14 +821,15 @@ function App() {
           {/* DYNAMIC VIEWPORT - Either Split or Full Screen */}
           {isFullScreenView ? (
              // FULL SCREEN MODE
-             <div style={{ flex: 1, display: 'flex', flexDirection: 'column', padding: '0 20px 20px 20px', overflow: 'hidden' }}>
+             <div style={{ flex: 1, display: 'flex', flexDirection: 'column', padding: '0', overflow: 'hidden' }}>
                 <div style={{ 
                   textAlign: 'center', 
                   marginBottom: '10px', 
                   color: '#9ca3af',
                   display: 'flex',
                   justifyContent: 'space-between',
-                  alignItems: 'center'
+                  alignItems: 'center',
+                  padding: '0 20px'
                 }}>
                   <span>Click boxes to remove objects. The image will update to show the result.</span>
                   {removedObjects.length > 0 && (
@@ -842,8 +843,7 @@ function App() {
                   display: 'flex', 
                   justifyContent: 'center', 
                   alignItems: 'center',
-                  backgroundColor: '#111827',
-                  borderRadius: '12px',
+                  background: 'transparent',
                   overflow: 'hidden',
                   position: 'relative'
                 }}>
