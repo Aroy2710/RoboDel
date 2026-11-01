@@ -142,7 +142,11 @@ function App() {
     experienced_glitches: "No"
   });
   const [surveySubmitted, setSurveySubmitted] = useState(false);
+  const [showInstructions, setShowInstructions] = useState(true);
 
+  // Fullscreen view toggle state
+  const [isFullScreenView, setIsFullScreenView] = useState(false);
+  
   useEffect(() => {
     if (participantId) {
       sessionStorage.setItem("robodel_pid", participantId);
@@ -170,6 +174,8 @@ function App() {
     setTargetConfirmCoords(null);
     setSearchLatencySec(0);
     setFeedbackRing(null);
+    setShowInstructions(true);
+    setIsFullScreenView(false); // Reset on new trial
     telemetryRef.current = []; 
     currentMouseRef.current = { x: 0, y: 0 }; 
 
@@ -290,7 +296,7 @@ function App() {
     return () => clearTimeout(timerId);
   }, [phase]);
 
-  // Phase 1 Observation Interaction: Mouse tracking, Double-click confirmation, and Spacebar abandonment
+  // Phase 1 Observation Interaction: Mouse tracking, Double-click confirmation, and X key abandonment
   useEffect(() => {
     if (phase === PHASES.OBSERVATION && naturalDims && workingImageRef.current && pyramidRefs.current.length > 0) {
       const canvas = canvasRef.current;
@@ -433,10 +439,10 @@ function App() {
         }, 250);
       };
 
-      // Spacebar: Explicit Abandonment / Target-Absent bypass
+      // Changed from Spacebar to X key for explicit abandonment
       const handleKeyDown = (e) => {
-        if (e.code === 'Space') {
-          e.preventDefault(); // Guard against page scroll
+        if (e.key === 'x' || e.key === 'X') {
+          e.preventDefault(); 
 
           const latency = observationStartTimeRef.current 
             ? (performance.now() - observationStartTimeRef.current) / 1000 
@@ -478,7 +484,10 @@ function App() {
   const handleImageClick = (event) => {
     if (isProcessing || !naturalDims || !workingImageRef.current) return;
 
-    const imgElement = document.getElementById('interactive-scene-img');
+    // Use full-screen or half-screen img element
+    const imgElementId = isFullScreenView ? 'full-screen-scene-img' : 'interactive-scene-img';
+    const imgElement = document.getElementById(imgElementId);
+    
     if (!imgElement) return;
 
     const rect = imgElement.getBoundingClientRect();
@@ -668,7 +677,7 @@ function App() {
           <p style={{ color: '#9ca3af', fontSize: '16px', maxWidth: '560px', margin: '0 auto 25px auto', lineHeight: '1.6' }}>
             Search using the clear focus circle.<br />
             <b>Double left-click directly on the target</b> when found.<br />
-            Press the <b>Spacebar</b> if the target is absent or cannot be found.
+            Press the <b>'X' key</b> if the target is absent or cannot be found.
           </p>
           <button 
             onClick={() => setPhase(PHASES.BLANK_SCREEN)}
@@ -716,7 +725,7 @@ function App() {
 
       {/* 4. INTERACTIVE VERIFICATION */}
       {phase === PHASES.INTERACTIVE && (
-        <div className="interactive-layout" style={{ paddingTop: '20px' }}>
+        <div className="interactive-layout" style={{ paddingTop: '20px', height: '100vh', display: 'flex', flexDirection: 'column' }}>
           <div className="interactive-toolbar">
             <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
               <span style={{
@@ -731,6 +740,40 @@ function App() {
                 Trial {currentTrialIndex + 1} of {TRIAL_SEQUENCE.length}
               </span>
               <h2 style={{ margin: 0 }}>Target: <span style={{ color: '#60a5fa' }}>{activeTarget}</span></h2>
+              <button 
+                onClick={() => setShowInstructions(true)}
+                style={{
+                  background: '#4b5563',
+                  border: 'none',
+                  padding: '6px 12px',
+                  borderRadius: '6px',
+                  color: '#fff',
+                  fontWeight: 'bold',
+                  fontSize: '13px',
+                  cursor: 'pointer'
+                }}
+              >
+                ℹ️ Instructions
+              </button>
+              
+              {/* Toggle View Button */}
+              <button 
+                onClick={() => setIsFullScreenView(!isFullScreenView)}
+                style={{
+                  background: isFullScreenView ? '#3b82f6' : '#6b7280',
+                  border: 'none',
+                  padding: '6px 12px',
+                  borderRadius: '6px',
+                  color: '#fff',
+                  fontWeight: 'bold',
+                  fontSize: '13px',
+                  cursor: 'pointer',
+                  marginLeft: '10px'
+                }}
+              >
+                {isFullScreenView ? '◨ Split View' : '🔲 Single Large View'}
+              </button>
+              
               {targetFound && (
                 <span style={{
                   background: 'rgba(34, 197, 94, 0.15)',
@@ -775,51 +818,177 @@ function App() {
             </div>
           </div>
 
-          <div className="interactive-windows-grid">
-            <div className="interactive-card">
-              <div className="interactive-card-title">Click to delete objects you do not recall seeing in the previous image</div>
-              <div className="interactive-viewport-wrapper">
-                <div style={{ position: 'relative', display: 'inline-block', lineHeight: 0, maxHeight: '100%', maxWidth: '100%' }}>
-                  <img
-                    id="interactive-scene-img"
-                    src={interactiveBaseImage}
-                    onClick={handleImageClick}
-                    alt="Interactive Target"
-                    className="interactive-viewport-img"
-                    style={{ cursor: isProcessing ? 'wait' : 'crosshair' }}
-                  />
-                  {naturalDims && boundingboxes.map((box) => {
-                    const leftPercent = (box.x / naturalDims.width) * 100;
-                    const topPercent = (box.y / naturalDims.height) * 100;
-                    const widthPercent = (box.width / naturalDims.width) * 100;
-                    const heightPercent = (box.height / naturalDims.height) * 100;
-                    return (
-                      <div
-                        key={box.id}
-                        style={{
-                          position: 'absolute', 
-                          left: `${leftPercent}%`, 
-                          top: `${topPercent}%`, 
-                          width: `${widthPercent}%`, 
-                          height: `${heightPercent}%`,
-                          border: `2px solid ${box.isClicked ? '#ef4444' : '#22c55e'}`,
-                          backgroundColor: box.isClicked ? 'rgba(239, 68, 68, 0.25)' : 'rgba(34, 197, 94, 0.15)',
-                          pointerEvents: 'none'
+          {/* DYNAMIC VIEWPORT - Either Split or Full Screen */}
+          {isFullScreenView ? (
+             // FULL SCREEN MODE
+             <div style={{ flex: 1, display: 'flex', flexDirection: 'column', padding: '0 20px 20px 20px', overflow: 'hidden' }}>
+                <div style={{ 
+                  textAlign: 'center', 
+                  marginBottom: '10px', 
+                  color: '#9ca3af',
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center'
+                }}>
+                  <span>Click boxes to remove objects. The image will update to show the result.</span>
+                  {removedObjects.length > 0 && (
+                    <span style={{ color: '#ef4444', fontWeight: 'bold' }}>
+                      {removedObjects.length} object(s) currently removed
+                    </span>
+                  )}
+                </div>
+                <div style={{ 
+                  flex: 1, 
+                  display: 'flex', 
+                  justifyContent: 'center', 
+                  alignItems: 'center',
+                  backgroundColor: '#111827',
+                  borderRadius: '12px',
+                  overflow: 'hidden',
+                  position: 'relative'
+                }}>
+                   <div style={{ position: 'relative', display: 'inline-block', maxHeight: '100%', maxWidth: '100%' }}>
+                      <img
+                        id="full-screen-scene-img"
+                        src={displayImage} // Shows the updated in-painted image
+                        onClick={handleImageClick}
+                        alt="Interactive Target"
+                        style={{ 
+                          maxHeight: '100%', 
+                          maxWidth: '100%', 
+                          objectFit: 'contain',
+                          cursor: isProcessing ? 'wait' : 'crosshair'
                         }}
                       />
-                    );
-                  })}
+                      {naturalDims && boundingboxes.map((box) => {
+                        const leftPercent = (box.x / naturalDims.width) * 100;
+                        const topPercent = (box.y / naturalDims.height) * 100;
+                        const widthPercent = (box.width / naturalDims.width) * 100;
+                        const heightPercent = (box.height / naturalDims.height) * 100;
+                        return (
+                          <div
+                            key={box.id}
+                            style={{
+                              position: 'absolute', 
+                              left: `${leftPercent}%`, 
+                              top: `${topPercent}%`, 
+                              width: `${widthPercent}%`, 
+                              height: `${heightPercent}%`,
+                              border: `3px solid ${box.isClicked ? '#ef4444' : '#22c55e'}`, // Thicker borders for large view
+                              backgroundColor: box.isClicked ? 'rgba(239, 68, 68, 0.25)' : 'rgba(34, 197, 94, 0.15)',
+                              pointerEvents: 'none'
+                            }}
+                          />
+                        );
+                      })}
+                   </div>
                 </div>
-              </div>
-            </div>
+             </div>
+          ) : (
+             // ORIGINAL SPLIT SCREEN MODE
+             <div className="interactive-windows-grid" style={{ flex: 1, overflow: 'hidden' }}>
+                <div className="interactive-card">
+                  <div className="interactive-card-title">Click to delete objects you do not recall seeing in the previous image</div>
+                  <div className="interactive-viewport-wrapper">
+                    <div style={{ position: 'relative', display: 'inline-block', lineHeight: 0, maxHeight: '100%', maxWidth: '100%' }}>
+                      <img
+                        id="interactive-scene-img"
+                        src={interactiveBaseImage}
+                        onClick={handleImageClick}
+                        alt="Interactive Target"
+                        className="interactive-viewport-img"
+                        style={{ cursor: isProcessing ? 'wait' : 'crosshair' }}
+                      />
+                      {naturalDims && boundingboxes.map((box) => {
+                        const leftPercent = (box.x / naturalDims.width) * 100;
+                        const topPercent = (box.y / naturalDims.height) * 100;
+                        const widthPercent = (box.width / naturalDims.width) * 100;
+                        const heightPercent = (box.height / naturalDims.height) * 100;
+                        return (
+                          <div
+                            key={box.id}
+                            style={{
+                              position: 'absolute', 
+                              left: `${leftPercent}%`, 
+                              top: `${topPercent}%`, 
+                              width: `${widthPercent}%`, 
+                              height: `${heightPercent}%`,
+                              border: `2px solid ${box.isClicked ? '#ef4444' : '#22c55e'}`,
+                              backgroundColor: box.isClicked ? 'rgba(239, 68, 68, 0.25)' : 'rgba(34, 197, 94, 0.15)',
+                              pointerEvents: 'none'
+                            }}
+                          />
+                        );
+                      })}
+                    </div>
+                  </div>
+                </div>
 
-            <div className="interactive-card">
-              <div className="interactive-card-title">Current Render</div>
-              <div className="interactive-viewport-wrapper">
-                <img src={displayImage} alt="Inpainted State" className="interactive-viewport-img" />
+                <div className="interactive-card">
+                  <div className="interactive-card-title">Current Render</div>
+                  <div className="interactive-viewport-wrapper">
+                    <img src={displayImage} alt="Inpainted State" className="interactive-viewport-img" />
+                  </div>
+                </div>
+             </div>
+          )}
+          
+          {/* Modal Overlay for Instructions */}
+          {showInstructions && (
+            <div style={{
+              position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+              backgroundColor: 'rgba(0, 0, 0, 0.75)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              zIndex: 9999
+            }}>
+              <div style={{
+                backgroundColor: 'white',
+                padding: '32px',
+                borderRadius: '8px',
+                maxWidth: '600px',
+                width: '90%',
+                boxShadow: '0 4px 12px rgba(0, 0, 0, 0.3)',
+                color: '#334155'
+              }}>
+                <h2 style={{ marginTop: 0, color: '#1e293b' }}>Phase 2: Interaction Instructions</h2>
+                
+                <ol style={{ lineHeight: '1.6', color: '#334155', paddingLeft: '20px', fontSize: '16px' }}>
+                  <li style={{ marginBottom: '14px' }}>
+                    <strong>Memory Recall View:</strong> You will see an unblurred view of the room with several candidate objects outlined in green boxes. <br/>
+                    <em>Tip: Use the "Single Large View" button at the top to make the image bigger if objects are hard to see.</em>
+                  </li>
+                  <li style={{ marginBottom: '14px' }}>
+                    <strong>Your Goal:</strong> Click any object you <strong>do not remember seeing</strong> during the search phase. <br/>
+                    <em>(Note: Some objects in this view were intentionally not present in the first phase).</em>
+                  </li>
+                  <li style={{ marginBottom: '14px' }}>
+                    <strong>Visual Ablation:</strong> Clicking an object turns its box red and immediately shows the scene without that object. Click it again if you realize you made a mistake and wish to restore it.
+                  </li>
+                  <li style={{ marginBottom: '14px' }}>
+                    <strong>Submission:</strong> When satisfied with your selections, click the green <strong>Save and Continue</strong> button to move to the next trial.
+                  </li>
+                </ol>
+
+                <button 
+                  onClick={() => setShowInstructions(false)}
+                  style={{
+                    marginTop: '20px',
+                    width: '100%',
+                    padding: '14px',
+                    backgroundColor: '#3b82f6',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '6px',
+                    cursor: 'pointer',
+                    fontWeight: 'bold',
+                    fontSize: '16px'
+                  }}
+                >
+                  Close and Return to Trial
+                </button>
               </div>
             </div>
-          </div>
+          )}
         </div>
       )}
 
