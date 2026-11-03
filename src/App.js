@@ -955,7 +955,7 @@ function App() {
                 <ol style={{ lineHeight: '1.6', color: '#334155', paddingLeft: '20px', fontSize: '16px' }}>
                   <li style={{ marginBottom: '14px' }}>
                     <strong>Memory Recall View:</strong> You will see an unblurred view of the room with several candidate objects outlined in green boxes. <br/>
-                    <em>Tip: Use the "Single Large View" button at the top to make the image bigger if objects are hard to see.</em>
+                    <em>Tip: Use the "Single Large View" button at the top to make the image bigger if objects are hard to see. The selected objects will not appear in this view.</em>
                   </li>
                   <li style={{ marginBottom: '14px' }}>
                     <strong>Your Goal:</strong> Click any object you <strong>do not remember seeing</strong> during the search phase. <br/>

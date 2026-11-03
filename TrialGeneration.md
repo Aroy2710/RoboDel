@@ -77,9 +77,9 @@ python scripts/batch_pregenerate_2.py \
 | **11** | `Trial_11_Kitchen_FP3` | `FloorPlan7` | Kitchen | Yes |
 | **12** | `Trial_12_LivingRoom_FP201` | `FloorPlan201` | Living Room | No |
 | **13** | `Trial_13_Bedroom_FP303` | `FloorPlan303` | Bedroom | Yes|
-| **14** | `Trial_14_LivingRoom_FP203` | `FloorPlan203` | Living Room |
-| **15** | `Trial_15_Kitchen_FP4` | `FloorPlan8` | Kitchen |
-| **16** | `Trial_16_Bedroom_FP302` | `FloorPlan302` | Bedroom |
+| **14** | `Trial_14_LivingRoom_FP203` | `FloorPlan203` | Living Room | Yes |
+| **15** | `Trial_15_Kitchen_FP4` | `FloorPlan8` | Kitchen | No| 
+| **16** | `Trial_16_Bedroom_FP302` | `FloorPlan302` | Bedroom | Yes |
 ---
 
 # Trial Configs
