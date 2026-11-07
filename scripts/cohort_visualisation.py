@@ -106,7 +106,7 @@ def generate_cohort_heatmap(trial_index, sigma=3.5, alpha=0.55):
         cbar = fig.colorbar(im, ax=ax, fraction=0.032, pad=0.02)
         cbar.ax.yaxis.set_tick_params(color='white')
         plt.setp(plt.getp(cbar.ax.axes, 'yticklabels'), color='white')
-        cbar.set_label("Equally Weighted Average Fixation Density", fontsize=12, fontweight="bold", color='white')
+        cbar.set_label("Equally Weighted Average Telemetry Point Density", fontsize=12, fontweight="bold", color='white')
 
     add_target_info_annotation(ax, trial_index, target_obj)
     

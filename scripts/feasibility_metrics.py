@@ -38,24 +38,6 @@ def calculate_cohort_completion_rate(data: dict, total_trials_per_p: int = 16, e
         "benchmark_met": completion_rate >= 85.0
     }
 
-def calculate_full_session_adherence(data: dict, total_trials_per_p: int = 16, exclude_pids: list = None) -> dict:
-    if exclude_pids is None: exclude_pids = []
-    participants = {k: v for k, v in data.get("participants", {}).items() if str(k) not in exclude_pids}
-    n_finished_all = sum(
-        1 for p in participants.values()
-        if p["trials_completed"] >= total_trials_per_p and p["status"] == "completed"
-    )
-    total_participants = len(participants)
-    adherence_rate = (n_finished_all / total_participants) * 100.0 if total_participants > 0 else 0.0
-
-    return {
-        "metric": "Full Session Adherence",
-        "value_pct": adherence_rate,
-        "adherent_participants": n_finished_all,
-        "total_participants": total_participants,
-        "benchmark_met": adherence_rate >= 80.0
-    }
-
 def find_attrition_onset_points(data: dict, exclude_pids: list = None) -> dict:
     if exclude_pids is None: exclude_pids = []
     participants = {k: v for k, v in data.get("participants", {}).items() if str(k) not in exclude_pids}
@@ -143,10 +125,10 @@ def plot_average_trial_time_against_index(
         ax.plot(
             trials, duration_matrix[i],
             color="gray", alpha=0.30, linewidth=1.1,
-            label="Participant Traces" if i == 0 else ""
+            label="Individual Tester Runs" if i == 0 else ""
         )
 
-    ax.plot(trials, mean_per_trial, color="#4b5563", linewidth=2.0, linestyle="--", label="Cohort Mean Trend", zorder=3)
+    ax.plot(trials, mean_per_trial, color="#4b5563", linewidth=2.0, linestyle="--", label="Average Session Trend", zorder=3)
     ax.fill_between(trials, mean_per_trial - std_per_trial, mean_per_trial + std_per_trial, color="#4b5563", alpha=0.10, zorder=2)
 
     for i, trial_idx in enumerate(trials):
@@ -248,21 +230,18 @@ if __name__ == "__main__":
         m1 = calculate_cohort_completion_rate(dataset, total_trials_per_p=16, exclude_pids=EXCLUDE)
         print(f"1. Cohort Completion Rate  : {m1['value_pct']:.2f}% ({m1['completed_trials']}/{m1['expected_trials']} trials) [Benchmark >= 85%: {m1['benchmark_met']}]")
 
-        m2 = calculate_full_session_adherence(dataset, total_trials_per_p=16, exclude_pids=EXCLUDE)
-        print(f"2. Full Session Adherence  : {m2['value_pct']:.2f}% ({m2['adherent_participants']}/{m2['total_participants']} participants) [Benchmark >= 80%: {m2['benchmark_met']}]")
-
         m3 = find_attrition_onset_points(dataset, exclude_pids=EXCLUDE)
-        print(f"3. Attrition Onset Point   : {m3['interpretation']}")
+        print(f"2. Attrition Onset Point   : {m3['interpretation']}")
 
         m4 = calculate_mean_trial_duration(dataset, exclude_pids=EXCLUDE, unit="min")
-        print(f"4. Mean Session Duration   : {m4['mean_session_duration']:.2f} ± {m4['std_session_duration']:.2f} min (N={m4['evaluated_participants']})")
+        print(f"3. Mean Session Duration   : {m4['mean_session_duration']:.2f} ± {m4['std_session_duration']:.2f} min (N={m4['evaluated_participants']})")
         print(f"   Mean Single Trial Time  : {m4['mean_individual_trial_sec']:.2f} ± {m4['std_individual_trial_sec']:.2f} sec")
 
         plot_average_trial_time_against_index(dataset, total_trials=16, exclude_pids=EXCLUDE)
 
         m6 = calculate_data_persistence_rate(dataset, exclude_pids=EXCLUDE)
-        print(f"6. Data Persistence Rate   : {m6['value_pct']:.2f}% ({m6['sessions_recorded_on_disk']}/{m6['total_completed_submissions']}) [Benchmark 100%: {m6['benchmark_met']}]")
+        print(f"4. Data Persistence Rate   : {m6['value_pct']:.2f}% ({m6['sessions_recorded_on_disk']}/{m6['total_completed_submissions']}) [Benchmark 100%: {m6['benchmark_met']}]")
 
         m7 = calculate_average_ease_of_use(SURVEY_JSON, target_benchmark=7.0, exclude_pids=EXCLUDE)
-        print(f"7. Average Ease of Use     : {m7['mean']:.2f} / 10.0 (SD: {m7['std']:.2f}, Range: {m7['min']}–{m7['max']}) [Benchmark >= 7.0: {m7['benchmark_met']}]")
+        print(f"5. Average Ease of Use     : {m7['mean']:.2f} / 10.0 (SD: {m7['std']:.2f}, Range: {m7['min']}–{m7['max']}) [Benchmark >= 7.0: {m7['benchmark_met']}]")
         print("=" * 70)
