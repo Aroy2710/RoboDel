@@ -128,7 +128,7 @@ function App() {
   const [terminationMode, setTerminationMode] = useState("unknown");
   const [targetConfirmCoords, setTargetConfirmCoords] = useState(null);
   const [searchLatencySec, setSearchLatencySec] = useState(0);
-  const [feedbackRing, setFeedbackRing] = useState(null);
+
 
   const experimentStartTimeRef = useRef(null);
   const trialStartTimeRef = useRef(null);
@@ -173,7 +173,7 @@ function App() {
     setTerminationMode("unknown");
     setTargetConfirmCoords(null);
     setSearchLatencySec(0);
-    setFeedbackRing(null);
+
     setShowInstructions(true);
     setIsFullScreenView(false); // Reset on new trial
     telemetryRef.current = []; 
@@ -426,12 +426,7 @@ function App() {
         setTargetFound(isTargetHit);
         setTerminationMode(mode);
 
-        // Display feedback pulse under cursor
-        setFeedbackRing({
-          clientX: e.clientX,
-          clientY: e.clientY,
-          success: isTargetHit
-        });
+
 
         setTimeout(() => {
           setPhase(PHASES.TRANSITION);
@@ -700,24 +695,6 @@ function App() {
             style={{ width: '100%', height: '100%', pointerEvents: 'auto', cursor: 'none', objectFit: 'cover' }}
           />
 
-          {/* Feedback Ring upon Double-Click */}
-          {feedbackRing && (
-            <div
-              style={{
-                position: 'fixed',
-                left: feedbackRing.clientX - 28,
-                top: feedbackRing.clientY - 28,
-                width: 56,
-                height: 56,
-                borderRadius: '50%',
-                border: `4px solid ${feedbackRing.success ? '#22c55e' : '#f59e0b'}`,
-                backgroundColor: feedbackRing.success ? 'rgba(34, 197, 94, 0.25)' : 'rgba(245, 158, 11, 0.25)',
-                pointerEvents: 'none',
-                boxShadow: `0 0 16px ${feedbackRing.success ? '#22c55e' : '#f59e0b'}`,
-                zIndex: 9999
-              }}
-            />
-          )}
         </div>
       )}
 
