@@ -1,6 +1,6 @@
 # RoboDel
 
-RoboDel is a deployable QA testing platform for evaluating goal-directed visual search using AI2-THOR and React.
+RoboDel is a  platform for evaluating goal-directed visual search using AI2-THOR and React.
 
 ## Part 1: Running the Application Locally (Windows & Mac)
 
@@ -100,7 +100,12 @@ Create a mapping file to force AI2-THOR to route graphics properly (e.g., mappin
 
 To cover a diverse range of environments, select scenes across the 4 domestic categories.
 
-**Core iTHOR Scenes:**| Category | Scene 1 | Scene 2 | Scene 3 | Scene 4 || --- | --- | --- | --- | --- || **Kitchen** | `FloorPlan5` | `FloorPlan6` | `FloorPlan7` | `FloorPlan8` || **Living Room** | `FloorPlan201` | `FloorPlan202` | `FloorPlan203` | `FloorPlan204` || **Bedroom** | `FloorPlan301` | `FloorPlan302` | `FloorPlan303` | `FloorPlan304` || **Bathroom** | `FloorPlan401` | `FloorPlan402` | `FloorPlan403` | `FloorPlan404` |
+| Category | Scene 1 | Scene 2 | Scene 3 | Scene 4 |
+| --- | --- | --- | --- | --- |
+| **Kitchen** | `FloorPlan5` | `FloorPlan6` | `FloorPlan7` | `FloorPlan8` |
+| **Living Room** | `FloorPlan201` | `FloorPlan202` | `FloorPlan203` | `FloorPlan204` |
+| **Bedroom** | `FloorPlan301` | `FloorPlan302` | `FloorPlan303` | `FloorPlan304` |
+| **Bathroom** | `FloorPlan401` | `FloorPlan402` | `FloorPlan403` | `FloorPlan404` |
 
 **Pseudo-Randomized Trial Sequence:**To prevent users from predicting layouts, use this alternating sequence:
 
@@ -311,7 +316,27 @@ For each scene, follow this three-step generation sequence:
       --targets Laptop Statue Television WateringCan GarbageCan Painting Box DeskLamp FloorLamp HousePlant \
       --random-obs
 
-The images and `bounding_boxes.json` will save to the `public/Prerendered_Scenes/` directory.
+The images and `bounding_boxes.json` will save to the `public/Prerendered_Scenes/` directory. For motion info consult the table below. Note that ProcTHOR has not be integrated yet as an environment to explore , hence you should not select ProcTHOR for dataset type.
+
+| Argument | Type | Default | Description |
+| --- | --- | --- | --- |
+| `--dataset-type` | `str` (`ithor` | `procthor`) | `ithor` | Selects whether to load static iTHOR floor plans or ProcTHOR procedural houses. |
+| `--scene` | `str` | `FloorPlan1` | The scene name to load when using `--dataset-type ithor` (e.g., `FloorPlan1` to `FloorPlan430`). |
+| `--procthor-house-id` | `int` | `0` | The integer index of the house when using `--dataset-type procthor` (e.g., `0` to `9999`). |
+| `--procthor-split` | `str` (`train` | `val` | `test`) | `train` | Dataset split to load the ProcTHOR house from. |
+| `--trial` | `str` | `Trial_1_FP1_Island` | Output directory name under `public/Prerendered_Scenes/<trial>`. |
+| `--x` | `float` | `-1.25` | Agent camera X position. |
+| `--y` | `float` | `0.901` | Agent camera Y position (eye height). |
+| `--z` | `float` | `0.0` | Agent camera Z position. |
+| `--rotX` | `float` | `0.0` | Agent camera X rotation. |
+| `--rotY` | `float` | `90.0` | Agent camera Y rotation (azimuth / compass heading: `0`, `90`, `180`, `270`). |
+| `--rotZ` | `float` | `0.0` | Agent camera Z rotation. |
+| `--horizon` | `float` | `0.0` | Camera pitch angle (e.g., `0`, `30`, `-30`). |
+| `--targets` | `list[str]` | `Apple Bowl Bread Tomato Book Card` | Space-separated list of target object categories to detect and ablate. |
+| `--random-obs` | flag (`store_true`) | `False` | Generates `obs.jpg` by randomly selecting a permutation missing 2 to 5 objects. |
+| `--exclude-obs` | `list[str]` | `[]` | Explicit objects to ablate in `obs.jpg` (e.g., `Chair Bowl`). Generic names target instance `_1`. |
+| `--list-objects` | flag (`store_true`) | `False` | Debug mode. Prints all visible objects from the given camera view and exits without saving files. |
+
 
 ### Step 4: Update React State
 
