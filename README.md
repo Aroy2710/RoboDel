@@ -255,7 +255,12 @@ Create a mapping file to force AI2-THOR to route graphics properly (e.g., mappin
 
 To cover a diverse range of environments, select scenes across the 4 domestic categories.
 
-**Core iTHOR Scenes:**| Category | Scene 1 | Scene 2 | Scene 3 | Scene 4 || --- | --- | --- | --- | --- || **Kitchen** | `FloorPlan5` | `FloorPlan6` | `FloorPlan7` | `FloorPlan8` || **Living Room** | `FloorPlan201` | `FloorPlan202` | `FloorPlan203` | `FloorPlan204` || **Bedroom** | `FloorPlan301` | `FloorPlan302` | `FloorPlan303` | `FloorPlan304` || **Bathroom** | `FloorPlan401` | `FloorPlan402` | `FloorPlan403` | `FloorPlan404` |
+| Category | Scene 1 | Scene 2 | Scene 3 | Scene 4 |
+| --- | --- | --- | --- | --- |
+| **Kitchen** | `FloorPlan5` | `FloorPlan6` | `FloorPlan7` | `FloorPlan8` |
+| **Living Room** | `FloorPlan201` | `FloorPlan202` | `FloorPlan203` | `FloorPlan204` |
+| **Bedroom** | `FloorPlan301` | `FloorPlan302` | `FloorPlan303` | `FloorPlan304` |
+| **Bathroom** | `FloorPlan401` | `FloorPlan402` | `FloorPlan403` | `FloorPlan404` |
 
 **Pseudo-Randomized Trial Sequence:**To prevent users from predicting layouts, use this alternating sequence:
 
@@ -336,20 +341,16 @@ Run the feasibility suite to output core performance metrics to the terminal and
     conda activate robodel
     python feasibility_metrics.py
 
-### 2. Calculate Memory Recall Accuracy (Section 5.3)
-
-Run the object recall script to calculate the False-Positive Rejection Accuracy (distractor ablation success rate).
-
-    python object_recall.py
-
-### 3. Generate Visualizations (Figure 3 & 4)
-
-Run the visualization suite to process the 300ms telemetry arrays into cohesive graphics (scan paths and heatmaps). Outputs are saved to `output/feasibility_results/`.
-
-    python cohort_visualisation.py 
 
 
-### 4. Calculate Visual Sampling Density
+### 2. Generate Visualizations (Figure 3 & 4)
+
+Run the visualization suite to process the 300ms telemetry arrays into cohesive graphics (scan paths and heatmaps). Outputs are saved to `output/feasibility_results/`. The current
+
+    python cohort_visualisation.py <trial number (1-16)>
+
+
+### 3. Calculate Visual Sampling Density
 
 Run the sampling script to output the average visual sampling points per trial.
 
