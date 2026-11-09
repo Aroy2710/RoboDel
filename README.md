@@ -1,237 +1,361 @@
-
 # RoboDel
 
-This repository contains a deployable visual perception experiment built using AI2-THOR and React. 
+RoboDel is a deployable QA testing platform for evaluating goal-directed visual search using AI2-THOR and React.
 
-## Part 1: Running the Application Locally 
-This section is for running the pre-configured experiment on a standard local machine. It does not require advanced headless Vulkan configurations or GPU indexing. If you wish to use the application and make your own trials please go to Part 2
+## Part 1: Running the Application Locally (Windows & Mac)
 
-### Step 1 — Environment Setup
-Set up a Python virtual environment for the backend and install the Node modules for the frontend.
+Follow these steps to run the pre-configured QA evaluation protocol on a standard local machine. No advanced GPU configurations are required.
 
-```bash
-cd RoboDel
+### Step 1: Environment Setup
 
-# 1. Setup Python Backend
-conda create -y -n robodel python=3.10
-conda activate robodel
-pip install -r requirements.txt
+Ensure you have [Anaconda/Miniconda](https://docs.anaconda.com/miniconda/) and [Node.js](https://nodejs.org/) installed.
 
-# 2. Setup React Frontend
-npm install
+Open your terminal (macOS) or PowerShell/CMD (Windows):
 
-```
+    cd RoboDel
+    
+    # 1. Setup Python Backend
+    conda create -y -n robodel python=3.10
+    conda activate robodel
+    pip install -r requirements.txt
+    
+    # 2. Setup React Frontend
+    npm install
 
-### Step 2 — Launching the Application
+### Step 2: Launch the Application
 
-Run the application using two separate terminals.
+You need to run the backend and frontend simultaneously in two separate terminal windows.
 
-**Terminal 1 (Backend Server):**
-This enables the save functionality and manages telemetry logging.
+**Terminal 1 (Backend Server):**Starts the local server to handle save requests and telemetry logging.
 
-```bash
-cd RoboDel
-conda activate robodel
-python local_server.py 
+    cd RoboDel
+    conda activate robodel
+    python local_server.py 
 
-```
+**Terminal 2 (Frontend UI):**Launches the React application in your default web browser.
 
-**Terminal 2 (Frontend UI):**
-This launches the participant workflow in your browser.
+    cd RoboDel
+    npm start
 
-```bash
-cd RoboDel
-npm start
+### Step 3: Executing a Trial (Tester Workflow)
 
-```
+Once the app is running in your browser:
 
-### Experimental Procedure (Participant Workflow)
+1. **Login:** Enter your Tester ID and click "Start".
+2. **Review Target:** Note the target object displayed on the screen, then click "Begin Trial".
+3. **Search:** Move your mouse to unblur the foveal window and search the room.
+  * **Double-Left-Click** directly on the target if you find it.
+  * **Press the 'X' key** if the target is missing or cannot be found.
+4. **Interactive Verification:** The screen will transition to an unblurred view with green bounding boxes. Click on any outlined objects that were **not** present in the original blurred scene to remove them.
+5. **Save:** Click "Save and Continue" to log the trial data and proceed to the next room.
 
-When the application is running, participants will progress through the following standardized trial flow:
+* * *
 
-1. **Setup:** The participant enters their Participant ID and is shown a specific target object to locate (e.g., "Pan").
-2. **Pre-Stimulus:** A 500ms blank screen clears visual persistence, followed immediately by a 500ms red fixation cross to center the participant's gaze.
-3. **Observation Phase:** The scene appears heavily blurred. Moving the mouse simulates a 2.5-degree foveal window, unblurring the image around the cursor in real-time. Background telemetry captures the cursor's (X, Y) coordinates every 300ms.
-4. **Interactive Phase:** The participant presses `Enter` to transition to the ablation workspace. They click green bounding boxes to select and remove objects that were *not* present in the original blurred image.
-5. **Data Collection:** Clicking "Save" securely POSTs the final modified image, removed labels, and mouse telemetry arrays back to the local `output/` directory.
+## Part 2: Generating New Trials
 
----
+Use these instructions to generate new combinatorial trial images using AI2-THOR's graphics engine.
 
-## Part 2: Lab Server Setup & Generating New Trials 
+### Step 1: Graphics Initialization & GPU Mapping
 
-This section is for researchers generating new combinatorial trial images directly on lab servers using AI2-THOR's headless graphics engine.
+**Option A: Local Windows/macOS (Recommended)**Run the generation scripts locally. AI2-THOR will automatically open a Unity render window. Skip to Step 2.
 
-### Step 1 — Advanced Graphics Libraries (Headless Vulkan)
+**Option B: Headless Linux/Ubuntu Lab Server**If generating trials remotely on a headless GPU server, configure the Vulkan libraries and map the GPU.
 
-If you are working on a headless GPU container, you must configure `libglvnd` and map the GPU indices properly.
+First, install and link the required `libglvnd` libraries:
 
-Run `vulkaninfo --summary` first. If it lists your NVIDIA GPU under `Devices:`, skip to Step 2. If it lists only `llvmpipe` (Mesa's CPU rasterizer) or nothing, stage the necessary libraries:
+    conda install -y -c conda-forge vulkan-tools xorg-libxext
+    
+    # Create temporary environment to extract libraries
+    conda create -y -p /tmp/glvnd -c conda-forge \
+        libglvnd-cos7-x86_64 libglvnd-glx-cos7-x86_64 \
+        libglvnd-egl-cos7-x86_64 libglvnd-opengl-cos7-x86_64
+    
+    # Copy them to your local user directory
+    mkdir -p ~/.local/vulkanfix/lib
+    cp -P /tmp/glvnd/x86_64-conda-linux-gnu/sysroot/usr/lib64/lib{GL,EGL,GLX,GLdispatch,OpenGL}.so* \
+          ~/.local/vulkanfix/lib/
+    cp -P $CONDA_PREFIX/lib/libXext.so.6* ~/.local/vulkanfix/lib/
+    
+    # Export the path
+    export LD_LIBRARY_PATH=~/.local/vulkanfix/lib
 
-```bash
-conda install -y -c conda-forge vulkan-tools xorg-libxext
+Next, initialize the Unity Build (~1.1 GB) manually to prevent timeouts:
 
-conda create -y -p /tmp/glvnd -c conda-forge \
-    libglvnd-cos7-x86_64 libglvnd-glx-cos7-x86_64 \
-    libglvnd-egl-cos7-x86_64 libglvnd-opengl-cos7-x86_64
-mkdir -p ~/.local/vulkanfix/lib
-cp -P /tmp/glvnd/x86_64-conda-linux-gnu/sysroot/usr/lib64/lib{GL,EGL,GLX,GLdispatch,OpenGL}.so* \
-      ~/.local/vulkanfix/lib/
-cp -P $CONDA_PREFIX/lib/libXext.so.6* ~/.local/vulkanfix/lib/
+    python -c "
+    from ai2thor.controller import Controller
+    from ai2thor.platform import CloudRendering
+    Controller(platform=CloudRendering, download_only=True)"
 
-export LD_LIBRARY_PATH=~/.local/vulkanfix/lib
-vulkaninfo --summary        # should now list your NVIDIA device
+Finally, map your CUDA GPU to its Vulkan index. Check indexes using:
 
-```
+    nvidia-smi -L                                             # Lists CUDA indexes
+    vulkaninfo --summary | grep -E "^GPU[0-9]|deviceUUID"     # Lists Vulkan indexes
 
-Make it automatic so every shell inherits it:
+Create a mapping file to force AI2-THOR to route graphics properly (e.g., mapping CUDA `1` to Vulkan `0`):
 
-```bash
-mkdir -p $CONDA_PREFIX/etc/conda/{activate,deactivate}.d
+    mkdir -p ~/.ai2thor
+    echo '{"1": 0}' > ~/.ai2thor/cuda-vulkan-mapping.json
 
-cat > $CONDA_PREFIX/etc/conda/activate.d/thor3d_vulkan.sh <<'INNER_EOF'
-export _THOR3D_OLD_LD_LIBRARY_PATH="${LD_LIBRARY_PATH-}"
-export LD_LIBRARY_PATH="$HOME/.local/vulkanfix/lib${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
-INNER_EOF
+### Step 2: Experimental Setup and Scene Selection
 
-cat > $CONDA_PREFIX/etc/conda/deactivate.d/thor3d_vulkan.sh <<'INNER_EOF'
-if [ -n "${_THOR3D_OLD_LD_LIBRARY_PATH+x}" ]; then
-    if [ -z "$_THOR3D_OLD_LD_LIBRARY_PATH" ]; then unset LD_LIBRARY_PATH
-    else export LD_LIBRARY_PATH="$_THOR3D_OLD_LD_LIBRARY_PATH"; fi
-    unset _THOR3D_OLD_LD_LIBRARY_PATH
-fi
-INNER_EOF
+To cover a diverse range of environments, select scenes across the 4 domestic categories.
 
-```
-
-Re-activate the environment: `conda deactivate && conda activate robodel`.
-
-### Step 2 — Unity Build & GPU Indexing
-
-The first run downloads AI2-THOR's Unity build (~1.1 GB unpacked). Run this manually to prevent timeouts:
-
-```bash
-python -c "
-from ai2thor.controller import Controller
-from ai2thor.platform import CloudRendering
-Controller(platform=CloudRendering, download_only=True)"
-
-```
-
-Next, map the correct CUDA index to the Vulkan device:
-
-```bash
-nvidia-smi -L                                             # CUDA index -> GPU-<uuid>
-vulkaninfo --summary | grep -E "^GPU[0-9]|deviceUUID"     # Vulkan index -> deviceUUID
-
-```
-
-If the indexes do not match, write a manual mapping file to force AI2-THOR to use the correct GPU (e.g., mapping CUDA 1 to Vulkan 0):
-
-```bash
-echo '{"1": 0}' > ~/.ai2thor/cuda-vulkan-mapping.json
-
-```
-
-### Step 3 — Probing a Scene with web_explorer.py
-
-Use `web_explorer.py` to navigate a scene (e.g., `FloorPlan7`) and find optimal camera coordinates.
-
-```bash
-python scripts/web_explorer.py FloorPlan7
-
-```
-The scene should look something like this 
-![alt text](image.png)
-Open port 8001 in your browser. Note the X, Y, Z, Rotation, and Horizon parameters of your desired viewpoint. Navigate around the scene to get your desired coordinates.
-
-Probe the scene to see what objects AI2-THOR can detect at those coordinates by appending the `--list-objects` flag:
-
-```bash
-python scripts/batch_pregenerate.py \
-  --scene FloorPlan7 \
-  --x -0.25 \
-  --y 0.901 \
-  --z 0.25 \
-  --rotY 270 \
-  --horizon 0 \
-  --list-objects
-
-```
-You should get the following output:
-
-```
-Probing FloorPlan7 for visible objects...
-
-=== VISIBLE OBJECTS FOUND ===
- - Book
- - Bowl
- - Bread
- - Cabinet
- - Chair
- - CoffeeMachine
- - CounterTop
- - Cup
- - DiningTable
- - Drawer
- - Egg
- - Floor
- - HousePlant
- - Lettuce
- - Pot
- - Window
-=============================
-Exiting probe mode. No files were generated.
-```
-### Step 4 — Batch Generating Combinatorial Images
-
-Once you have selected your target objects (e.g., Book, Bowl, Bread, Chair, Cup, Egg, HousePlant), run the generation script. Note that duplicate items (e.g., 3 chairs) will be automatically indexed as unique entities (e.g., `chair_1`, `chair_2`).
-
-```bash
-python scripts/batch_pregenerate.py \
-  --scene FloorPlan7 \
-  --trial Trial_x_FP7_Counter \
-  --x -0.25 \
-  --y 0.901 \
-  --z 0.25 \
-  --rotY 270 \
-  --horizon 0 \
-  --targets Book Bowl Bread Chair Cup Egg HousePlant
-
-```
-Here is a snippet of the output
-
-```
-Clearing existing contents in /data/roy/RoboDel/public/Prerendered_Scenes/Trial_x_FP7_Counter...
-Initializing FloorPlan7 -> Saving to /data/roy/RoboDel/public/Prerendered_Scenes/Trial_x_FP7_Counter
-Saved base image: /data/roy/RoboDel/public/Prerendered_Scenes/Trial_x_FP7_Counter/base.jpg
-Target items detected (9): ['book_1', 'bowl_1', 'bread_1', 'chair_1', 'chair_2', 'chair_3', 'cup_1', 'egg_1', 'houseplant_1']
-Saved native bounding boxes to: /data/roy/RoboDel/public/Prerendered_Scenes/Trial_x_FP7_Counter/bounding_boxes.json
--> Generated removed_book_1.jpg
--> Generated removed_bowl_1.jpg
-```
-
-The variants and their associated `bounding_boxes.json` will be saved to `public/Prerendered_Scenes/Trial_x_FP7_Counter`.
-
-### Step 5 — Updating the React Application
-
-To make the new trial accessible in the UI, update the state arrays in `src/App.js`.
-
-**Both arrays must be updated identically to prevent the application from crashing:**
-
-```javascript
-const TRIAL_SEQUENCE = [
-  "Trial_1_FP1_Island",
-  "Trial_2_FP207_LivingRoom",
-  "Trial_x_FP7_Counter"
-];
-
-const TARGET_SEQUENCE = [
-  "Pan",
-  "Bottle",
-  "Egg" 
-];
-
-```
-
-The application will sequence the trials in the exact order specified above. Ensure `local_server.py` is actively running to capture the resulting session data.
+**Core iTHOR Scenes:**| Category | Scene 1 | Scene 2 | Scene 3 | Scene 4 || --- | --- | --- | --- | --- || **Kitchen** | `FloorPlan5` | `FloorPlan6` | `FloorPlan7` | `FloorPlan8` || **Living Room** | `FloorPlan201` | `FloorPlan202` | `FloorPlan203` | `FloorPlan204` || **Bedroom** | `FloorPlan301` | `FloorPlan302` | `FloorPlan303` | `FloorPlan304` || **Bathroom** | `FloorPlan401` | `FloorPlan402` | `FloorPlan403` | `FloorPlan404` |
+
+**Pseudo-Randomized Trial Sequence:**To prevent users from predicting layouts, use this alternating sequence:
+
+| Run # | Trial Directory | Scene ID | Room Category | Target Present |
+| --- | --- | --- | --- | --- |
+| **01** | `Trial_01_LivingRoom_FP202` | `FloorPlan205` | Living Room | No  |
+| **02** | `Trial_02_Bathroom_FP403` | `FloorPlan403` | Bathroom | No  |
+| **03** | `Trial_03_Kitchen_FP1` | `FloorPlan5` | Kitchen | No  |
+| **04** | `Trial_04_Kitchen_FP2` | `FloorPlan6` | Kitchen | No  |
+| **05** | `Trial_05_Bedroom_FP304` | `FloorPlan304` | Bedroom | No  |
+| **06** | `Trial_06_Bathroom_FP401` | `FloorPlan401` | Bathroom | Yes |
+| **07** | `Trial_07_LivingRoom_FP204` | `FloorPlan204` | Living Room | No  |
+| **08** | `Trial_08_Bedroom_FP301` | `FloorPlan301` | Bedroom | No  |
+| **09** | `Trial_09_Bathroom_FP404` | `FloorPlan404` | Bathroom | Yes |
+| **10** | `Trial_10_Bathroom_FP402` | `FloorPlan402` | Bathroom | No  |
+| **11** | `Trial_11_Kitchen_FP3` | `FloorPlan7` | Kitchen | Yes |
+| **12** | `Trial_12_LivingRoom_FP201` | `FloorPlan201` | Living Room | No  |
+| **13** | `Trial_13_Bedroom_FP303` | `FloorPlan303` | Bedroom | Yes |
+| **14** | `Trial_14_LivingRoom_FP203` | `FloorPlan203` | Living Room | Yes |
+| **15** | `Trial_15_Kitchen_FP4` | `FloorPlan8` | Kitchen | No  |
+| **16** | `Trial_16_Bedroom_FP302` | `FloorPlan302` | Bedroom | Yes |
+
+### Step 3: Step-by-Step Batch Generation Workflow
+
+For each scene, follow this three-step generation sequence:
+
+**1. Interactive Camera Positioning**Launch the web explorer tool to position the camera toward a dense surface and note the HUD coordinates (`X`, `Y`, `Z`, `rotY`, `Horizon`).
+
+    python scripts/web_explorer.py 
+
+**2. Probe Visible Target Candidates**Verify which items the engine recognizes as visible from your viewpoint using the `--list-objects` flag:
+
+    python scripts/batch_pregenerate_2.py \
+      --dataset-type ithor \
+      --scene FloorPlan1 \
+      --x <X> --y <Y> --z <Z> --rotY <ROT> --horizon <HOR> \
+      --list-objects
+
+**3. Execute Full Batch Generation**Run the full permutation generation. Include the `--random-obs` flag to automatically designate which objects will be hidden during the initial Observation Phase.
+
+*Example Usage (Trial 1):*
+
+    python scripts/batch_pregenerate_2.py \
+      --dataset-type ithor \
+      --scene FloorPlan205 \
+      --trial Trial_01_LivingRoom_FP205 \
+      --x -3.7032 --y 0.9011 --z 0.7929 --rotY 29 --horizon 4.2501 \
+      --targets Laptop Statue Television WateringCan GarbageCan Painting Box DeskLamp FloorLamp HousePlant \
+      --random-obs
+
+The images and `bounding_boxes.json` will save to the `public/Prerendered_Scenes/` directory.
+For more information on arguments , consult the table 
+# RoboDel
+
+RoboDel is a deployable QA testing platform for evaluating goal-directed visual search using AI2-THOR and React.
+
+## Part 1: Running the Application Locally (Windows & Mac)
+
+Follow these steps to run the pre-configured QA evaluation protocol on a standard local machine. No advanced GPU configurations are required.
+
+### Step 1: Environment Setup
+
+Ensure you have [Anaconda/Miniconda](https://docs.anaconda.com/miniconda/) and [Node.js](https://nodejs.org/) installed.
+
+Open your terminal (macOS) or PowerShell/CMD (Windows):
+
+    cd RoboDel
+    
+    # 1. Setup Python Backend
+    conda create -y -n robodel python=3.10
+    conda activate robodel
+    pip install -r requirements.txt
+    
+    # 2. Setup React Frontend
+    npm install
+
+### Step 2: Launch the Application
+
+You need to run the backend and frontend simultaneously in two separate terminal windows.
+
+**Terminal 1 (Backend Server):**Starts the local server to handle save requests and telemetry logging.
+
+    cd RoboDel
+    conda activate robodel
+    python local_server.py 
+
+**Terminal 2 (Frontend UI):**Launches the React application in your default web browser.
+
+    cd RoboDel
+    npm start
+
+### Step 3: Executing a Trial (Tester Workflow)
+
+Once the app is running in your browser:
+
+1. **Login:** Enter your Tester ID and click "Start".
+2. **Review Target:** Note the target object displayed on the screen, then click "Begin Trial".
+3. **Search:** Move your mouse to unblur the foveal window and search the room.
+  * **Double-Left-Click** directly on the target if you find it.
+  * **Press the 'X' key** if the target is missing or cannot be found.
+4. **Interactive Verification:** The screen will transition to an unblurred view with green bounding boxes. Click on any outlined objects that were **not** present in the original blurred scene to remove them.
+5. **Save:** Click "Save and Continue" to log the trial data and proceed to the next room.
+
+* * *
+
+## Part 2: Generating New Trials
+
+Use these instructions to generate new combinatorial trial images using AI2-THOR's graphics engine.
+
+### Step 1: Graphics Initialization & GPU Mapping
+
+**Option A: Local Windows/macOS (Recommended)**Run the generation scripts locally. AI2-THOR will automatically open a Unity render window. Skip to Step 2.
+
+**Option B: Headless Linux/Ubuntu Lab Server**If generating trials remotely on a headless GPU server, configure the Vulkan libraries and map the GPU.
+
+First, install and link the required `libglvnd` libraries:
+
+    conda install -y -c conda-forge vulkan-tools xorg-libxext
+    
+    # Create temporary environment to extract libraries
+    conda create -y -p /tmp/glvnd -c conda-forge \
+        libglvnd-cos7-x86_64 libglvnd-glx-cos7-x86_64 \
+        libglvnd-egl-cos7-x86_64 libglvnd-opengl-cos7-x86_64
+    
+    # Copy them to your local user directory
+    mkdir -p ~/.local/vulkanfix/lib
+    cp -P /tmp/glvnd/x86_64-conda-linux-gnu/sysroot/usr/lib64/lib{GL,EGL,GLX,GLdispatch,OpenGL}.so* \
+          ~/.local/vulkanfix/lib/
+    cp -P $CONDA_PREFIX/lib/libXext.so.6* ~/.local/vulkanfix/lib/
+    
+    # Export the path
+    export LD_LIBRARY_PATH=~/.local/vulkanfix/lib
+
+Next, initialize the Unity Build (~1.1 GB) manually to prevent timeouts:
+
+    python -c "
+    from ai2thor.controller import Controller
+    from ai2thor.platform import CloudRendering
+    Controller(platform=CloudRendering, download_only=True)"
+
+Finally, map your CUDA GPU to its Vulkan index. Check indexes using:
+
+    nvidia-smi -L                                             # Lists CUDA indexes
+    vulkaninfo --summary | grep -E "^GPU[0-9]|deviceUUID"     # Lists Vulkan indexes
+
+Create a mapping file to force AI2-THOR to route graphics properly (e.g., mapping CUDA `1` to Vulkan `0`):
+
+    mkdir -p ~/.ai2thor
+    echo '{"1": 0}' > ~/.ai2thor/cuda-vulkan-mapping.json
+
+### Step 2: Experimental Setup and Scene Selection
+
+To cover a diverse range of environments, select scenes across the 4 domestic categories.
+
+**Core iTHOR Scenes:**| Category | Scene 1 | Scene 2 | Scene 3 | Scene 4 || --- | --- | --- | --- | --- || **Kitchen** | `FloorPlan5` | `FloorPlan6` | `FloorPlan7` | `FloorPlan8` || **Living Room** | `FloorPlan201` | `FloorPlan202` | `FloorPlan203` | `FloorPlan204` || **Bedroom** | `FloorPlan301` | `FloorPlan302` | `FloorPlan303` | `FloorPlan304` || **Bathroom** | `FloorPlan401` | `FloorPlan402` | `FloorPlan403` | `FloorPlan404` |
+
+**Pseudo-Randomized Trial Sequence:**To prevent users from predicting layouts, use this alternating sequence:
+
+| Run # | Trial Directory | Scene ID | Room Category | Target Present |
+| --- | --- | --- | --- | --- |
+| **01** | `Trial_01_LivingRoom_FP202` | `FloorPlan205` | Living Room | No  |
+| **02** | `Trial_02_Bathroom_FP403` | `FloorPlan403` | Bathroom | No  |
+| **03** | `Trial_03_Kitchen_FP1` | `FloorPlan5` | Kitchen | No  |
+| **04** | `Trial_04_Kitchen_FP2` | `FloorPlan6` | Kitchen | No  |
+| **05** | `Trial_05_Bedroom_FP304` | `FloorPlan304` | Bedroom | No  |
+| **06** | `Trial_06_Bathroom_FP401` | `FloorPlan401` | Bathroom | Yes |
+| **07** | `Trial_07_LivingRoom_FP204` | `FloorPlan204` | Living Room | No  |
+| **08** | `Trial_08_Bedroom_FP301` | `FloorPlan301` | Bedroom | No  |
+| **09** | `Trial_09_Bathroom_FP404` | `FloorPlan404` | Bathroom | Yes |
+| **10** | `Trial_10_Bathroom_FP402` | `FloorPlan402` | Bathroom | No  |
+| **11** | `Trial_11_Kitchen_FP3` | `FloorPlan7` | Kitchen | Yes |
+| **12** | `Trial_12_LivingRoom_FP201` | `FloorPlan201` | Living Room | No  |
+| **13** | `Trial_13_Bedroom_FP303` | `FloorPlan303` | Bedroom | Yes |
+| **14** | `Trial_14_LivingRoom_FP203` | `FloorPlan203` | Living Room | Yes |
+| **15** | `Trial_15_Kitchen_FP4` | `FloorPlan8` | Kitchen | No  |
+| **16** | `Trial_16_Bedroom_FP302` | `FloorPlan302` | Bedroom | Yes |
+
+### Step 3: Step-by-Step Batch Generation Workflow
+
+For each scene, follow this three-step generation sequence:
+
+**1. Interactive Camera Positioning**Launch the web explorer tool to position the camera toward a dense surface and note the HUD coordinates (`X`, `Y`, `Z`, `rotY`, `Horizon`).
+
+    python scripts/web_explorer.py 
+
+**2. Probe Visible Target Candidates**Verify which items the engine recognizes as visible from your viewpoint using the `--list-objects` flag:
+
+    python scripts/batch_pregenerate_2.py \
+      --dataset-type ithor \
+      --scene FloorPlan1 \
+      --x <X> --y <Y> --z <Z> --rotY <ROT> --horizon <HOR> \
+      --list-objects
+
+**3. Execute Full Batch Generation**Run the full permutation generation. Include the `--random-obs` flag to automatically designate which objects will be hidden during the initial Observation Phase.
+
+*Example Usage (Trial 1):*
+
+    python scripts/batch_pregenerate_2.py \
+      --dataset-type ithor \
+      --scene FloorPlan205 \
+      --trial Trial_01_LivingRoom_FP205 \
+      --x -3.7032 --y 0.9011 --z 0.7929 --rotY 29 --horizon 4.2501 \
+      --targets Laptop Statue Television WateringCan GarbageCan Painting Box DeskLamp FloorLamp HousePlant \
+      --random-obs
+
+The images and `bounding_boxes.json` will save to the `public/Prerendered_Scenes/` directory.
+
+### Step 4: Update React State
+
+To make the new trial load in the UI, add your new folder name and target object to the state arrays in `src/App.js`:
+
+    const TRIAL_SEQUENCE = [
+      "Trial_01_LivingRoom_FP205",
+      "Trial_02_BathRoom_FP403" // <- Add new folders here in order
+    ];
+    
+    const TARGET_SEQUENCE = [
+      "Laptop",
+      "SoapBar"               // <- Add corresponding targets here
+    ];
+
+* * *
+
+## Part 3: Reproducing Evaluation Results
+
+Follow these steps to locally execute the analytical scripts and reproduce the metrics and figures from the study. Scripts process the raw telemetry data located in `output/Output_JSON/`.
+
+### 1. Generate Baseline Metrics (Table 2 & Figure 2)
+
+Run the feasibility suite to output core performance metrics to the terminal and generate the **Per-Trial Duration Trend (Figure 2)**.
+
+    cd scripts
+    conda activate robodel
+    python feasibility_metrics.py
+
+### 2. Calculate Memory Recall Accuracy (Section 5.3)
+
+Run the object recall script to calculate the False-Positive Rejection Accuracy (distractor ablation success rate).
+
+    python object_recall.py
+
+### 3. Generate Visualizations (Figure 3 & 4)
+
+Run the visualization suite to process the 300ms telemetry arrays into cohesive graphics (scan paths and heatmaps). Outputs are saved to `output/feasibility_results/`.
+
+    python cohort_visualisation.py 
+
+
+### 4. Calculate Visual Sampling Density
+
+Run the sampling script to output the average visual sampling points per trial.
+
+    python average_sample_points.py
+
+
+
+* * *
 
